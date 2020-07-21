@@ -1,0 +1,59 @@
+h2.font-semibold.text-xl.text-gray-500.pt-12.flex.items-center
+  .flex-auto
+    | Features
+    span.text-sm.p-1.bg-gray-100.ml-1.rounded-sm.font-bold.leading-none #{@features.count}
+
+  form.flex-none action=new_feature_path method='GET'
+    button.text-sm.text-gray-600.p-3.bg-gray-100.ml-1.rounded-sm.font-bold.leading-none.transition-colors.duration-150(class='hover:bg-gray-200' type='submit')
+      ' Add New Feature
+
+.w-8.h-1.bg-gray-300.my-10
+
+.overflow-auto.scrolling-touch
+  table.text-sm.w-100.text-left.w-full
+    thead.font-semibold.text-gray-500.border-b.border-gray-200
+      th.pb-2.pr-3 Name
+      th.pb-2.pr-3 Percentage
+      th.pb-2.pr-3 Groups
+      th.pb-2.pr-3 Users
+      - if @rollout.respond_to?(:logging)
+        th.pb-2.pr-3 Updated
+      th.pl-2
+
+    tbody.text-gray-600
+      - @features.each do |feature_name|
+        - feature = @rollout.get(feature_name)
+        tr.border-b.border-gray-200
+          td.py-2.whitespace-no-wrap
+            a.text-blue-600(href=feature_path(feature.name) class='hover:text-blue-700 hover:underline')
+              = feature_name
+            div.text-gray-500.text-xs = feature.data['description']
+          td.py-2.whitespace-no-wrap
+            - if feature.percentage == 0
+              span.text-gray-400 #{feature.percentage}%
+            - else
+              | #{feature.percentage}%
+          td.py-2.whitespace-no-wrap
+            = feature.groups.join(', ')
+          td.py-2.whitespace-no-wrap
+            - if feature.users.count == 0
+              span.text-gray-400 = feature.users.count
+            - else
+              = feature.users.count
+          - if @rollout.respond_to?(:logging)
+            td.py-2.whitespace-no-wrap
+              = time_ago(@rollout.logging.updated_at(feature_name))
+          td.flex.items-center.py-2.justify-end.whitespace-no-wrap.pl-3
+            form action=activate_percentage_feature_path(feature_name, 100) method='POST'
+              button.p-3.bg-gray-100.ml-1.rounded-sm.font-bold.leading-none.transition-colors.duration-150(class='hover:bg-gray-200' type='submit' onclick="return confirm('Are you sure you want activate #{feature_name} to 100%?')")
+                ' 100%
+            form action=activate_percentage_feature_path(feature_name, 0) method='POST'
+              button.p-3.bg-gray-100.ml-1.rounded-sm.font-bold.leading-none.transition-colors.duration-150(class='hover:bg-gray-200' type='submit' onclick="return confirm('Are you sure you want activate #{feature_name} to 0%?')")
+                ' 0%
+            form action=delete_feature_path(feature_name) method='POST'
+              button.p-3.bg-gray-100.ml-1.rounded-sm.font-bold.leading-none.transition-colors.duration-150(class='hover:bg-gray-200' type='submit' onclick="return confirm('Are you sure you want to delete #{feature_name}?')")
+                ' Delete
+
+- global_history_events = @rollout.respond_to?(:logging) ? @rollout.logging.global_events.reverse : []
+
+== slim :"features/partials/event_log", locals: { events: global_history_events, show_feature: true, show_header: true }

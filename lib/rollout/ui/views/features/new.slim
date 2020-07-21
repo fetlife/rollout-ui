@@ -1,0 +1,14 @@
+a.text-sm.text-blue-600(href=index_path class='hover:text-blue-700 hover:underline') &larr; back to overview
+
+h2.font-semibold.text-xl.text-gray-500.pt-12
+  ' New Feature
+
+.w-8.h-1.bg-gray-300.my-10
+
+form.p-6.bg-gray-100.max-w-lg.w-full.text-sm.rounded-sm action=new_feature_path method='POST'
+  .mb-5
+    label.block.text-gray-500.mb-2(for='name') Name
+    input.appearance-none.border.rounded-sm.w-full.py-2.px-4.text-gray-600.leading-relaxed.bg-white(name='name' id='name' class='hover:border-gray-500')
+
+  .flex.items-center.justify-end
+    button.py-4.px-5.bg-gray-700.text-gray-200.rounded-sm.font-bold.leading-none.transition-colors.duration-200(class='hover:bg-gray-800' type='submit') Create

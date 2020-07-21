@@ -1,0 +1,46 @@
+- show_feature ||= false
+- show_header ||= false
+
+- if events.any?
+  h2.font-semibold.text-xl.text-gray-500.pt-20.flex.items-center
+    | History
+  .w-8.h-1.bg-gray-300.my-10
+
+  .overflow-auto.scrolling-touch
+    table.text-sm.w-100.text-left.w-full
+      - if show_header
+        thead.font-semibold.text-gray-600.border-b.border-gray-200
+          - if show_feature
+            th.pb-2.pr-3 Feature
+          th.pb-2.pr-3 Action
+          th.pl-2
+
+      tbody.text-gray-600.border-t.border-gray-200
+        - events.each do |event|
+          tr.border-b.border-gray-200
+            - if show_feature
+              td.py-2.whitespace-no-wrap
+                a.text-blue-600(href=feature_path(event.feature) class='hover:text-blue-700 hover:underline')
+                  = event.feature
+            td.py-2.pr-3.whitespace-no-wrap
+              - if event.name == "update"
+                - if event.context && event.context[:actor]
+                  - if config.defined?(:actor_url)
+                    a.underline> href=config.get(:actor_url, event.context[:actor])
+                      = event.context[:actor]
+                  - else
+                    ' #{event.context[:actor]}
+                - else
+                  ' unidentified user
+                - changes = event.data.fetch(:before).keys.map do |key|
+                  - before = format_change_value(event.data.fetch(:before).fetch(key))
+                  - after = format_change_value(event.data.fetch(:after).fetch(key))
+                  - "#{format_change_key(key)} from #{before} to #{after}"
+
+                ' changed
+                = changes.join(', ')
+              - else
+                = event.data
+
+            td.flex.items-center.py-2.justify-end.whitespace-no-wrap.pl-3
+              = time_ago(event.created_at)

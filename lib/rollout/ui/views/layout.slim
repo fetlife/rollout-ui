@@ -1,0 +1,17 @@
+doctype html
+html
+  head
+    title Rollout UI
+    meta name='viewport' content='width=device-width initial-scale=1'
+    link rel='stylesheet' href=stylesheet_path('tailwind.min')
+
+  body
+    / Addresses https://stackoverflow.com/questions/21147149/flash-of-unstyled-content-fouc-in-firefox-only-is-ff-slow-renderer
+    script 0
+
+    .container.mx-auto.font-mono.text-gray-700.px-5.pb-20
+      h1.font-light.text-4xl.text-gray-600.pt-20
+        a href=index_path class='hover:text-blue-700'
+          ' Rollout
+
+      == yield

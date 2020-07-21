@@ -1,0 +1,75 @@
+require "sinatra"
+require "rollout"
+
+require "rollout/ui/version"
+require "rollout/ui/config"
+require "rollout/ui/helpers"
+
+module Rollout::UI
+  class Web < Sinatra::Base
+    set :static, true
+    set :public_folder, File.dirname(__FILE__) + '/public'
+
+    helpers Helpers
+
+    get '/' do
+      @rollout = config.get(:instance)
+      @features = @rollout.features.sort_by(&:downcase)
+
+      slim :'features/index'
+    end
+
+    get '/features/new' do
+      slim :'features/new'
+    end
+
+    post '/features/new' do
+      redirect feature_path(params[:name])
+    end
+
+    get '/features/:feature_name' do
+      @rollout = config.get(:instance)
+      @feature = @rollout.get(params[:feature_name])
+
+      slim :'features/show'
+    end
+
+    post '/features/:feature_name' do
+      rollout = config.get(:instance)
+      actor = config.get(:actor, scope: self)
+
+      rollout.logging.with_context(actor: actor) do
+        rollout.with_feature(params[:feature_name]) do |feature|
+          feature.percentage = params[:percentage].to_f.clamp(0.0, 100.0)
+          feature.groups = (params[:groups] || []).reject(&:empty?).map(&:to_sym)
+          if params[:users]
+            feature.users = params[:users].split(',').map(&:strip).uniq.sort
+          end
+          feature.data.update(description: params[:description])
+        end
+      end
+
+      redirect feature_path(params[:feature_name])
+    end
+
+    post '/features/:feature_name/activate-percentage' do
+      rollout = config.get(:instance)
+      actor = config.get(:actor, scope: self)
+
+      rollout.logging.with_context(actor: actor) do
+        rollout.with_feature(params[:feature_name]) do |feature|
+          feature.percentage = params[:percentage].to_f.clamp(0.0, 100.0)
+        end
+      end
+
+      redirect index_path
+    end
+
+    post '/features/:feature_name/delete' do
+      @rollout = config.get(:instance)
+      @rollout.delete(params[:feature_name])
+
+      redirect index_path
+    end
+  end
+end
