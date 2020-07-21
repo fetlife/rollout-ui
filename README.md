@@ -1,6 +1,6 @@
 # Rollout::Ui
 
-Minimalistic UI for the [rollout](https://github.com/fetlife/rollout) gem that
+Minimalist UI for the [rollout](https://github.com/fetlife/rollout) gem that
 you can just mount as a Rack app and it will just work.
 
 ![Index Page](./screenshot_index.png)
