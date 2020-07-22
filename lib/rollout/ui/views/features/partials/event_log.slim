@@ -26,7 +26,7 @@
               - if event.name == "update"
                 - if event.context && event.context[:actor]
                   - if config.defined?(:actor_url)
-                    a.underline> href=config.get(:actor_url, event.context[:actor])
+                    a.underline> href=config.get(:actor_url, event.context[:actor]) target='_blank'
                       = event.context[:actor]
                   - else
                     ' #{event.context[:actor]}

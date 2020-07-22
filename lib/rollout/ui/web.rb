@@ -38,7 +38,7 @@ module Rollout::UI
       rollout = config.get(:instance)
       actor = config.get(:actor, scope: self)
 
-      rollout.logging.with_context(actor: actor) do
+      with_rollout_context(rollout, actor: actor) do
         rollout.with_feature(params[:feature_name]) do |feature|
           feature.percentage = params[:percentage].to_f.clamp(0.0, 100.0)
           feature.groups = (params[:groups] || []).reject(&:empty?).map(&:to_sym)
@@ -56,7 +56,7 @@ module Rollout::UI
       rollout = config.get(:instance)
       actor = config.get(:actor, scope: self)
 
-      rollout.logging.with_context(actor: actor) do
+      with_rollout_context(rollout, actor: actor) do
         rollout.with_feature(params[:feature_name]) do |feature|
           feature.percentage = params[:percentage].to_f.clamp(0.0, 100.0)
         end

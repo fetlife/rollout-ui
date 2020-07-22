@@ -83,6 +83,19 @@ end
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/fetlife/rollout-ui.
 
+To run this project for development in isolation:
+
+```sh
+bundle install
+bundle exec rerun rackup
+```
+
+Alternatively you can also configure which Redis with:
+
+```sh
+REDIS_HOST=localhost REDIS_PORT=6379 REDIS_DB=10 be rerun rackup
+```
+
 ## License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
