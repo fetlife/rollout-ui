@@ -90,6 +90,8 @@ bundle install
 bundle exec rerun rackup
 ```
 
+And visit [http://localhost:9292/](http://localhost:9292/).
+
 Alternatively you can also configure which Redis with:
 
 ```sh
