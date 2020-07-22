@@ -39,7 +39,7 @@ module Rollout::UI
     end
 
     def defined?(key)
-      @blocks.present? && @blocks.key?(key)
+      !@blocks.nil? && @blocks.key?(key)
     end
   end
 end

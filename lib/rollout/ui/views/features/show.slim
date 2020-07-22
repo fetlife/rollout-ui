@@ -1,4 +1,5 @@
-a.text-sm.text-blue-600(href=index_path class='hover:text-blue-700 hover:underline') &larr; back to overview
+a.text-sm.text-blue-600(href=index_path class='hover:text-blue-700 hover:underline')
+  ' &larr; back to overview
 
 h2.font-semibold.text-xl.text-gray-500.pt-12
   = @feature.name
@@ -20,7 +21,7 @@ form.p-6.bg-gray-100.max-w-lg.w-full.text-sm.rounded-sm action=feature_path(@fea
       | Groups
       span.ml-1.text-gray-400
         | (multi-select)
-    select.block.appearance-none.w-full.bg-white.border.border-gray-300.px-4.py-3.rounded-sm.leading-relaxed(name="groups[]" id='groups' multiple=true size=$rollout.groups.count)
+    select.block.appearance-none.w-full.bg-white.border.border-gray-300.px-4.py-3.rounded-sm.leading-relaxed(name="groups[]" id='groups' multiple=true size=(@rollout.groups.count + 1))
       option.py-1.px-1(value='' selected=(@feature.groups.count == 0))
         = '(none)'
       - @rollout.groups.each do |group|
@@ -38,9 +39,7 @@ form.p-6.bg-gray-100.max-w-lg.w-full.text-sm.rounded-sm action=feature_path(@fea
       value=@feature.percentage
       class='hover:border-gray-500'
       type='number'
-      min='0'
-      max='100'
-      step='10'
+      step='0.1'
     )
 
   .mb-5

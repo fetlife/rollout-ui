@@ -10,7 +10,7 @@ module Rollout::UI
     end
 
     def index_path
-      request.script_name
+      "#{request.script_name}/"
     end
 
     def new_feature_path
@@ -32,7 +32,17 @@ module Rollout::UI
     def current_user
       @current_user ||= begin
         id = request.session["warden.user.user.key"].try(:[], 0).try(:[], 0)
-        User.find_by(id: id) if id.present?
+        User.find_by(id: id) unless id.nil?
+      end
+    end
+
+    def with_rollout_context(rollout, context)
+      if rollout.respond_to?(:logging)
+        rollout.logging.with_context(context) do
+          yield
+        end
+      else
+        yield
       end
     end
 
