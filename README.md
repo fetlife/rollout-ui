@@ -95,7 +95,7 @@ And visit [http://localhost:9292/](http://localhost:9292/).
 Alternatively you can also configure which Redis with:
 
 ```sh
-REDIS_HOST=localhost REDIS_PORT=6379 REDIS_DB=10 be rerun rackup
+REDIS_HOST=localhost REDIS_PORT=6379 REDIS_DB=10 bundle exec rerun rackup
 ```
 
 ## License

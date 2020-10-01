@@ -45,7 +45,20 @@ module Rollout::UI
           if params[:users]
             feature.users = params[:users].split(',').map(&:strip).uniq.sort
           end
-          feature.data.update(description: params[:description])
+          feature.data.each do |name, old_val|
+            new_val = params[name]
+
+            # keep type the same (for integers/boolean/strings)
+            new_val = if old_val.is_a? Integer
+              new_val.to_i
+            elsif !!old_val == old_val
+              new_val == 'true' ? true : (new_val == 'false' ? false : !!new_val)
+            else
+              new_val
+            end
+
+            feature.data.update(name => new_val)
+          end
         end
       end
 

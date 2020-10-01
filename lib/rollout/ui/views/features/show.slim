@@ -58,6 +58,22 @@ form.p-6.bg-gray-100.max-w-lg.w-full.text-sm.rounded-sm action=feature_path(@fea
       )
         = @feature.users.join(', ')
 
+  .mb-5
+    label.block.text-gray-500.mb-2 Additional Data
+
+    dl
+    - @feature.data.each do |name, val|
+      - next if name == 'description'
+      .sm:grid.sm:grid-cols-3.sm:gap-4.sm:px-6
+        dd.text-sm.leading-5.font-medium.text-gray-500 = name
+        input.appearance-none.border.rounded-sm.w-full.py-2.px-4.text-gray-600.leading-relaxed.bg-white.mt-1.sm:mt-0.sm:col-span-2(
+         name=name
+         id=name
+         value=(val == true ? 'true' : (val == false ? 'false' : val))
+         class='hover:border-gray-500'
+       )
+       
+      
   .flex.items-center.justify-end
     form action=delete_feature_path(@feature.name) method='POST'
       button.mr-5.text-gray-600(class='hover:underline' type='submit' onclick="return confirm('Are you sure you want to delete #{@feature.name}?')")
