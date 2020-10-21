@@ -84,5 +84,29 @@ module Rollout::UI
         value
       end
     end
+
+    def json_request?
+      request.env['HTTP_ACCEPT'] == 'application/json'
+    end
+
+    # Filters features by user and group if those params are provided
+    def filtered_features(rollout, feature_names)
+      feature_names.select do |feature_name|
+        feature = rollout.get(feature_name)
+        user_match = params[:user].nil? || feature.users.member?(params[:user])
+        group_match = params[:group].nil? || feature.groups.member?(params[:group].to_sym)
+        user_match && group_match
+      end
+    end
+
+    # Returns a hash of feature data to be rendered as json
+    def feature_to_hash(feature)
+      {
+        data: feature.data,
+        groups: feature.groups,
+        name: feature.name,
+        percentage: feature.percentage
+      }
+    end
   end
 end

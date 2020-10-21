@@ -1,4 +1,5 @@
 require "sinatra"
+require "sinatra/json"
 require "rollout"
 
 require "rollout/ui/version"
@@ -15,8 +16,15 @@ module Rollout::UI
     get '/' do
       @rollout = config.get(:instance)
       @features = @rollout.features.sort_by(&:downcase)
-
-      slim :'features/index'
+      if json_request?
+        json(
+          filtered_features(@rollout, @features).map do |feature|
+            feature_to_hash(@rollout.get(feature))
+          end
+        )
+      else
+        slim :'features/index'
+      end
     end
 
     get '/features/new' do
@@ -31,7 +39,11 @@ module Rollout::UI
       @rollout = config.get(:instance)
       @feature = @rollout.get(params[:feature_name])
 
-      slim :'features/show'
+      if json_request?
+        json(feature_to_hash(@feature))
+      else
+        slim :'features/show'
+      end
     end
 
     post '/features/:feature_name' do
