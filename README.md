@@ -58,6 +58,15 @@ Rails.application.routes.draw do
 end
 ```
 
+## API Endpoints
+
+The index and show routes can also respond with JSON data instead of HTML when the request's `Accept` header is
+`application/json`
+
+The index route also accepts query parameters to filter by user or group:
+`/admin/rollout?user=someone`
+`/admin/rollout?group=developers`
+
 ## Logging
 
 To get the most out of **rollout-ui**, we recommend you to turn on logging
