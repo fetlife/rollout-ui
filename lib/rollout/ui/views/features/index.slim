@@ -24,7 +24,7 @@ h2.font-semibold.text-xl.text-gray-500.pt-12.flex.items-center
       - @features.each do |feature_name|
         - feature = @rollout.get(feature_name)
         tr.border-b.border-gray-200
-          td.py-2.whitespace-no-wrap
+          td.py-2
             a.text-blue-600(href=feature_path(feature.name) class='hover:text-blue-700 hover:underline')
               = feature_name
             div.text-gray-500.text-xs = feature.data['description']
