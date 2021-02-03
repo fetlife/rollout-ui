@@ -1,6 +1,8 @@
 require 'spec_helper'
+
 ENV['APP_ENV'] = 'test'
-RSpec.describe 'Web UIp' do
+
+RSpec.describe 'Web UI' do
   include Rack::Test::Methods
 
   def app
@@ -9,16 +11,19 @@ RSpec.describe 'Web UIp' do
 
   it "renders index html" do
     get '/'
-    expect(last_response.body.include?('Rollout UI'))
-    expect(last_response.status == 200)
+
+    expect(last_response).to be_ok
+    expect(last_response.body).to include('Rollout UI')
   end
 
   it "renders index json" do
     ROLLOUT.activate(:fake_test_feature_for_rollout_ui_webspec)
     header 'Accept', 'application/json'
+
     get '/'
-    expect(last_response.status == 200)
-    expect(last_response.headers['Content-Type'] == 'application/json')
+
+    expect(last_response).to be_ok
+    expect(last_response.headers).to include('Content-Type' => 'application/json')
     response = JSON.parse(last_response.body)
     expected_response = {
       "data"=>{},
@@ -26,7 +31,7 @@ RSpec.describe 'Web UIp' do
       "name"=>"fake_test_feature_for_rollout_ui_webspec",
       "percentage"=>100.0
     }
-    expect(response).to(include(expected_response))
+    expect(response).to include(expected_response)
     ROLLOUT.delete(:fake_test_feature_for_rollout_ui_webspec)
   end
 
@@ -37,10 +42,10 @@ RSpec.describe 'Web UIp' do
 
     header 'Accept', 'application/json'
     get '/?user=different_user'
-    expect(last_response.status == 200)
-    expect(last_response.headers['Content-Type'] == 'application/json')
+    expect(last_response).to be_ok
+    expect(last_response.headers).to include('Content-Type' => 'application/json')
     response = JSON.parse(last_response.body)
-    expect(response == [])
+    expect(response).to be_empty
 
     expected_feature = {
       "data" => {},
@@ -50,17 +55,17 @@ RSpec.describe 'Web UIp' do
     }
     header 'Accept', 'application/json'
     get '/?user=fake_user'
-    expect(last_response.status == 200)
-    expect(last_response.headers['Content-Type'] == 'application/json')
+    expect(last_response).to be_ok
+    expect(last_response.headers).to include('Content-Type' => 'application/json')
     response = JSON.parse(last_response.body)
-    expect(response).to(include(expected_feature))
+    expect(response).to include(expected_feature)
 
     header 'Accept', 'application/json'
     get '/?group=fake_group'
-    expect(last_response.status == 200)
-    expect(last_response.headers['Content-Type'] == 'application/json')
+    expect(last_response).to be_ok
+    expect(last_response.headers).to include('Content-Type' => 'application/json')
     response = JSON.parse(last_response.body)
-    expect(response).to(include(expected_feature))
+    expect(response).to include(expected_feature)
 
     ROLLOUT.deactivate_user(:fake_test_feature_for_rollout_ui_webspec, 'fake_user')
     ROLLOUT.deactivate_group(:fake_test_feature_for_rollout_ui_webspec, :fake_group)
@@ -69,17 +74,19 @@ RSpec.describe 'Web UIp' do
 
   it "renders show html" do
     get '/features/test'
-    expect(last_response.body.include?('Rollout UI'))
-    expect(last_response.body.include?('test'))
-    expect(last_response.status == 200)
+
+    expect(last_response).to be_ok
+    expect(last_response.body).to include('Rollout UI') & include('test')
   end
 
   it "renders show json" do
     ROLLOUT.activate(:fake_test_feature_for_rollout_ui_webspec)
     header 'Accept', 'application/json'
+ 
     get '/features/fake_test_feature_for_rollout_ui_webspec'
-    expect(last_response.status == 200)
-    expect(last_response.headers['Content-Type'] == 'application/json')
+ 
+    expect(last_response).to be_ok
+    expect(last_response.headers).to include('Content-Type' => 'application/json')
     response = JSON.parse(last_response.body)
     expected_response = {
       "data"=>{},
@@ -87,7 +94,8 @@ RSpec.describe 'Web UIp' do
       "name"=>"fake_test_feature_for_rollout_ui_webspec",
       "percentage"=>100.0
     }
-    expect(expected_response == response)
+    expect(expected_response).to eq response
+
     ROLLOUT.delete(:fake_test_feature_for_rollout_ui_webspec)
   end
 end
