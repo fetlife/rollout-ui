@@ -45,7 +45,7 @@ form.p-6.bg-gray-100.max-w-lg.w-full.text-sm.rounded-sm action=feature_path(@fea
   .mb-5
     label.block.text-gray-500.mb-2 Users
 
-    - if @feature.users.count > 100
+    - if @feature.users.count > 150
       .appearance-none.border.rounded-sm.w-full.py-2.px-4.text-gray-600.leading-relaxed.bg-gray-100
         = @feature.users.count
     - else
