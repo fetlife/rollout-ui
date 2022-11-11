@@ -1,12 +1,15 @@
 a.text-sm.text-blue-600(href=index_path class='hover:text-blue-700 hover:underline')
   ' &larr; back to overview
 
+- if params[:error]
+  pre.text-red-500= params[:error]
 h2.font-semibold.text-xl.text-gray-500.pt-12
   = @feature.name
 
 .w-8.h-1.bg-gray-300.my-10
 main.p-6.bg-gray-100.max-w-lg.w-full.text-sm.rounded-sm
   form#updateFormSubmit action=feature_path(@feature.name) method='POST'
+    input type='hidden' name='last_updated_at' value=(@feature.data['updated_at'])
     .mb-5
       label.block.text-gray-500.mb-2(for='description') Description
       input.appearance-none.border.rounded-sm.w-full.py-2.px-4.text-gray-600.leading-relaxed.bg-white(
