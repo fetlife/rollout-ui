@@ -51,7 +51,7 @@ module Rollout::UI
       actor = config.get(:actor, scope: self)
       feature_data = rollout.get(params[:feature_name]).data
       if feature_data['updated_at'] && params[:last_updated_at] != feature_data['updated_at']
-        redirect "#{feature_path(params[:feature_name])}?error=It looks like this version of the rollout is outdated. Please refresh the page and try again."
+        redirect "#{feature_path(params[:feature_name])}?error=Rollout version outdated. Review changes below and try again."
       end
       with_rollout_context(rollout, actor: actor) do
         rollout.with_feature(params[:feature_name]) do |feature|
