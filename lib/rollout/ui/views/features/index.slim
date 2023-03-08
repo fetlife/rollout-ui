@@ -18,11 +18,24 @@ h2.font-semibold.text-xl.text-gray-500.pt-12.flex.items-center
       th.pb-2.pr-3 Users
       - if @rollout.respond_to?(:logging)
         th.pb-2.pr-3 Updated
+      th.pb-2.pr-3
+        | Consumer Cache Break
+        div[class="pl-1 tooltip cursor-pointer"]
+          | INFO?
+          div[class="tooltip-text tooltip-text-low p-3 rounded bg-white w-56 shadow-xl"]
+            span.text-red-500
+              | true
+            |  will break the consumer cache to update its content.<br>
+            | This results in a temporary increase in latency.
       th.pl-2
 
     tbody.text-gray-600
       - @features.each do |feature_name|
         - feature = @rollout.get(feature_name)
+        - has_cache_break = consumer_cache_break?(feature)
+        - activate_percentage = get_high_percent_activate(feature)
+        - deactivate_percentage = get_low_percent_activate(feature)
+
         tr.border-b.border-gray-200
           td.py-2
             a.text-blue-600(href=feature_path(feature.name) class='hover:text-blue-700 hover:underline')
@@ -43,13 +56,22 @@ h2.font-semibold.text-xl.text-gray-500.pt-12.flex.items-center
           - if @rollout.respond_to?(:logging)
             td.py-2.whitespace-no-wrap
               = time_ago(@rollout.logging.updated_at(feature_name))
+          td[class="py-2 whitespace-no-wrap #{has_cache_break ? 'text-red-500' : 'text-green-500'}"]
+            = feature.data['consumer_cache_break'] || 'false'
           td.flex.items-center.py-2.justify-end.whitespace-no-wrap.pl-3
-            form action=activate_percentage_feature_path(feature_name, 100) method='POST'
-              button.p-3.bg-gray-100.ml-1.rounded-sm.font-bold.leading-none.transition-colors.duration-150(class='hover:bg-gray-200' type='submit' onclick="return confirm('Are you sure you want activate #{feature_name} to 100%?')")
-                ' 100%
-            form action=activate_percentage_feature_path(feature_name, 0) method='POST'
-              button.p-3.bg-gray-100.ml-1.rounded-sm.font-bold.leading-none.transition-colors.duration-150(class='hover:bg-gray-200' type='submit' onclick="return confirm('Are you sure you want activate #{feature_name} to 0%?')")
-                ' 0%
+            form action=activate_percentage_feature_path(feature_name, activate_percentage) method='POST'
+              button(
+                class="p-3 ml-1 rounded-sm font-bold leading-none transition-colors duration-150 w-16 #{has_cache_break ? 'bg-red-100 hover:bg-red-200' : 'bg-gray-100 hover:bg-gray-200'}"
+                class='hover:bg-gray-200'
+                type='submit'
+                onclick="return confirm('#{confirmation_message(feature, activate_percentage)}')")
+                ' #{activate_percentage}%
+            form action=activate_percentage_feature_path(feature_name, deactivate_percentage) method='POST'
+              button(
+                class="p-3 ml-1 rounded-sm font-bold leading-none transition-colors duration-150 w-16 #{has_cache_break ? 'bg-red-100 hover:bg-red-200' : 'bg-gray-100 hover:bg-gray-200'}"
+                type='submit'
+                onclick="return confirm('#{confirmation_message(feature, deactivate_percentage)}')")
+                ' #{deactivate_percentage}%
             form action=delete_feature_path(feature_name) method='POST'
               button.p-3.bg-gray-100.ml-1.rounded-sm.font-bold.leading-none.transition-colors.duration-150(class='hover:bg-gray-200' type='submit' onclick="return confirm('Are you sure you want to delete #{feature_name}?')")
                 ' Delete

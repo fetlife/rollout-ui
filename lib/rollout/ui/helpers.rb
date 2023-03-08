@@ -108,5 +108,28 @@ module Rollout::UI
         percentage: feature.percentage
       }
     end
+
+    def confirmation_message(feature, percent)
+      if consumer_cache_break?(feature)
+        "Please allow 20 minutes between changes for caching to recover. \\nAre you sure you want update #{feature.name} to #{percent}%?"
+      else
+        "Are you sure you want update #{feature.name} to #{percent}%?"
+      end
+    end
+    def consumer_cache_break?(feature)
+      feature.data['consumer_cache_break'] == 'true'
+    end
+
+    def get_high_percent_activate(feature)
+      return 100 unless consumer_cache_break?(feature)
+
+      [100, feature.percentage + 20].min
+    end
+
+    def get_low_percent_activate(feature)
+      return 0 unless consumer_cache_break?(feature)
+
+      [0, feature.percentage - 20].max
+    end
   end
 end

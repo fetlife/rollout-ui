@@ -4,10 +4,56 @@ html
     title Rollout UI
     meta name='viewport' content='width=device-width initial-scale=1'
     link rel='stylesheet' href=stylesheet_path('tailwind.min')
+    css:
+      .tooltip {
+        position: relative;
+        display: inline-block;
+        border-bottom: 1px dotted black;
+      }
 
+      .tooltip .tooltip-text {
+        visibility: hidden;
+        text-align: center;
+
+        position: absolute;
+        z-index: 1;
+        left: 52px;
+        top: -75px;
+      }
+      .tooltip .tooltip-text-low {
+        text-align: left;
+        top: -2px;
+      }
+      .tooltip .tooltip-text:before {
+        content: '';
+        visibility: hidden;
+        width: 0;
+        height: 0;
+        position: absolute;
+
+        border-top: 8px solid transparent;
+        border-bottom: 8px solid transparent;
+        border-right: 8px solid white;
+        left: -8px;
+        top: 76px;
+        z-index: 1;
+      }
+
+      .tooltip .tooltip-text-low:before {
+        top: -2px;
+      }
+
+      .tooltip:hover .tooltip-text {
+        visibility: visible;
+      }
+
+      .tooltip:hover .tooltip-text:before {
+        visibility: visible;
+      }
   body
     / Addresses https://stackoverflow.com/questions/21147149/flash-of-unstyled-content-fouc-in-firefox-only-is-ff-slow-renderer
     script 0
+
 
     .container.mx-auto.font-mono.text-gray-700.px-5.pb-20
       h1.font-light.text-4xl.text-gray-600.pt-20

@@ -61,6 +61,7 @@ module Rollout::UI
             feature.users = params[:users].split(',').map(&:strip).uniq.sort
           end
           feature.data.update(description: params[:description])
+          feature.data.update(consumer_cache_break: params[:consumer_cache_break])
           feature.data.update(updated_at: Time.now.to_i)
         end
       end
