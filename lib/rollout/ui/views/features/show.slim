@@ -63,7 +63,7 @@ main.p-6.bg-gray-100.max-w-lg.w-full.text-sm.rounded-sm
 
   .flex.items-center.justify-end
     form action=delete_feature_path(@feature.name) method='POST'
-      button.mr-5.text-gray-600(class='hover:underline' type='submit' onclick="return confirm('Are you sure you want to delete #{@feature.name}?')")
+      button.mr-5.text-gray-600(class='hover:underline' type='submit' onclick="return confirm('Are you sure you want to delete #{sanitized_name(@feature.name)}?')")
         | Delete
     button.py-4.px-5.bg-gray-700.text-gray-200.rounded-sm.font-bold.leading-none.transition-colors.duration-200(
       type='submit'
