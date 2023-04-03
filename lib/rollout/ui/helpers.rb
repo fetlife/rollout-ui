@@ -105,7 +105,8 @@ module Rollout::UI
         data: feature.data,
         groups: feature.groups,
         name: feature.name,
-        percentage: feature.percentage
+        percentage: feature.percentage,
+        users: feature.users
       }
     end
   end
