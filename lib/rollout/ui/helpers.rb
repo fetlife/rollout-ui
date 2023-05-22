@@ -108,5 +108,9 @@ module Rollout::UI
         percentage: feature.percentage
       }
     end
+
+    def sanitized_name(feature_name)
+      Rack::Utils.escape_html(feature_name)
+    end
   end
 end

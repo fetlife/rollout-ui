@@ -45,13 +45,13 @@ h2.font-semibold.text-xl.text-gray-500.pt-12.flex.items-center
               = time_ago(@rollout.logging.updated_at(feature_name))
           td.flex.items-center.py-2.justify-end.whitespace-no-wrap.pl-3
             form action=activate_percentage_feature_path(feature_name, 100) method='POST'
-              button.p-3.bg-gray-100.ml-1.rounded-sm.font-bold.leading-none.transition-colors.duration-150(class='hover:bg-gray-200' type='submit' onclick="return confirm('Are you sure you want activate #{feature_name} to 100%?')")
+              button.p-3.bg-gray-100.ml-1.rounded-sm.font-bold.leading-none.transition-colors.duration-150(class='hover:bg-gray-200' type='submit' onclick="return confirm('Are you sure you want activate #{sanitized_name(feature_name)} to 100%?')")
                 ' 100%
             form action=activate_percentage_feature_path(feature_name, 0) method='POST'
-              button.p-3.bg-gray-100.ml-1.rounded-sm.font-bold.leading-none.transition-colors.duration-150(class='hover:bg-gray-200' type='submit' onclick="return confirm('Are you sure you want activate #{feature_name} to 0%?')")
+              button.p-3.bg-gray-100.ml-1.rounded-sm.font-bold.leading-none.transition-colors.duration-150(class='hover:bg-gray-200' type='submit' onclick="return confirm('Are you sure you want activate #{sanitized_name(feature_name)} to 0%?')")
                 ' 0%
             form action=delete_feature_path(feature_name) method='POST'
-              button.p-3.bg-gray-100.ml-1.rounded-sm.font-bold.leading-none.transition-colors.duration-150(class='hover:bg-gray-200' type='submit' onclick="return confirm('Are you sure you want to delete #{feature_name}?')")
+              button.p-3.bg-gray-100.ml-1.rounded-sm.font-bold.leading-none.transition-colors.duration-150(class='hover:bg-gray-200' type='submit' onclick="return confirm('Are you sure you want to delete #{sanitized_name(feature_name)}?')")
                 ' Delete
 
 - global_history_events = @rollout.respond_to?(:logging) ? @rollout.logging.global_events.reverse : []
