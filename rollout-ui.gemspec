@@ -23,8 +23,8 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_dependency 'rollout', '~> 2.5'
-  spec.add_dependency 'sinatra', '~> 2.0'
-  spec.add_dependency 'sinatra-contrib', '~> 2.1'
+  spec.add_dependency 'sinatra', '~> 3.1'
+  spec.add_dependency 'sinatra-contrib', '~> 3.1'
   spec.add_dependency 'slim', ['>= 3.0', '< 5.0']
 
   spec.add_development_dependency 'bundler', '>= 1.17'
