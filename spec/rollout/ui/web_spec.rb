@@ -73,12 +73,12 @@ RSpec.describe 'Web UI' do
   end
 
   it "rescapes javascript in the action index" do
-    ROLLOUT.activate(:'+alert(1)+')
+    ROLLOUT.activate(:'<script>alert(1)</script>')
 
     get '/'
 
     expect(last_response).to be_ok
-    expect(last_response.body).to include('Rollout UI') & include("&amp;#x27;+alert(1)+&amp;#x27;")
+    expect(last_response.body).to include('Rollout UI') & include("&amp;lt;script&amp;gt;alert(1)&amp;lt;&amp;")
   end
 
   it "renders show html" do

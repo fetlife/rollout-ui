@@ -22,16 +22,17 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'rollout', '~> 2.5'
-  spec.add_dependency 'sinatra', '~> 2.0'
-  spec.add_dependency 'sinatra-contrib', '~> 2.1'
-  spec.add_dependency 'slim', ['>= 3.0', '< 5.0']
+  spec.add_dependency 'rollout', '~> 2.6'
+  spec.add_dependency 'sinatra', ['>= 2.0', '< 5.0']
+  spec.add_dependency 'sinatra-contrib', ['>= 2.0', '< 5.0']
+  spec.add_dependency 'slim', ['>= 3.0', '< 6.0']
 
   spec.add_development_dependency 'bundler', '>= 1.17'
-  spec.add_development_dependency 'rake', '~> 10.0'
-  spec.add_development_dependency 'rspec', '~> 3.0'
-  spec.add_development_dependency 'rerun', '~> 0.13'
+  spec.add_development_dependency 'rake'
+  spec.add_development_dependency 'rspec', '~> 3.13'
+  spec.add_development_dependency 'rerun', '~> 0.14'
   spec.add_development_dependency 'rack-test'
+  spec.add_development_dependency 'rackup'
   spec.add_development_dependency 'puma'
   spec.add_development_dependency 'pry'
 end
