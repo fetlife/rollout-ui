@@ -13,9 +13,7 @@ h2.font-semibold.text-xl.text-gray-500.pt-12.flex.items-center
   table.text-sm.w-100.text-left.w-full
     thead.font-semibold.text-gray-500.border-b.border-gray-200
       th.pb-2.pr-3 Name
-      th.pb-2.pr-3 Percentage
-      th.pb-2.pr-3 Groups
-      th.pb-2.pr-3 Users
+      th.pb-2.pr-3 Active for
       - if @rollout.respond_to?(:logging)
         th.pb-2.pr-3 Updated
       th.pl-2
@@ -29,17 +27,16 @@ h2.font-semibold.text-xl.text-gray-500.pt-12.flex.items-center
               = feature_name
             div.text-gray-500.text-xs = feature.data['description']
           td.py-2.whitespace-no-wrap
-            - if feature.percentage == 0
-              span.text-gray-400 #{feature.percentage}%
+            - if feature.groups.empty? && feature.users.count == 0
+              span No one
+            - elsif feature.percentage == 100 && feature.groups.include?(:all)
+              span Everyone
+            - elsif feature.groups.empty? && feature.users.count > 0
+              = "#{feature.users.count} users"
+            - elsif !feature.groups.empty? && feature.users.count == 0
+              = "#{feature.percentage}% of members in any of [#{feature.groups.join(', ')}]"
             - else
-              | #{feature.percentage}%
-          td.py-2.whitespace-no-wrap
-            = feature.groups.join(', ')
-          td.py-2.whitespace-no-wrap
-            - if feature.users.count == 0
-              span.text-gray-400 = feature.users.count
-            - else
-              = feature.users.count
+              = "#{feature.users.count} users and #{feature.percentage}% of members in any of [#{feature.groups.join(', ')}]"
           - if @rollout.respond_to?(:logging)
             td.py-2.whitespace-no-wrap
               = time_ago(@rollout.logging.updated_at(feature_name))

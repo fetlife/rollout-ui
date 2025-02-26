@@ -35,7 +35,7 @@ main.p-6.bg-gray-100.max-w-lg.w-full.text-sm.rounded-sm
             = group
 
     .mb-5
-      label.block.text-gray-500.mb-2(for='percentage') Percentage
+      label.block.text-gray-500.mb-2(for='percentage') Groups percentage
       input.appearance-none.border.rounded-sm.w-full.py-2.px-4.text-gray-600.leading-relaxed.bg-white(
         name='percentage'
         id='percentage'
@@ -46,7 +46,10 @@ main.p-6.bg-gray-100.max-w-lg.w-full.text-sm.rounded-sm
       )
 
     .mb-5
-      label.block.text-gray-500.mb-2 Users
+      label.block.text-gray-500.mb-2
+        | Users
+        span.ml-1.text-gray-400
+          | (active regardless of groups and percentage)
 
       - if @feature.users.count > 150
         .appearance-none.border.rounded-sm.w-full.py-2.px-4.text-gray-600.leading-relaxed.bg-gray-100
@@ -61,6 +64,16 @@ main.p-6.bg-gray-100.max-w-lg.w-full.text-sm.rounded-sm
         )
           = @feature.users.join(', ')
 
+    .mb-5
+      label.block.text-gray-500.mb-2 
+        span.flex.items-center.cursor-pointer.select-none onclick="toggleCollapsible('matching-explanation')"
+          | How does matching work? 
+          span.ml-2.text-gray-400#matching-toggle ▶
+      .appearance-none.border.rounded-sm.w-full.py-3.px-4.text-gray-600.leading-relaxed.bg-gray-50#matching-explanation style="display:none"
+        p.mb-2
+          | <strong>$rollout.active?(:#{@feature.name})</strong><br>Will match only if percentage is set to 100
+        p.mb-2
+          | <strong>$rollout.active?(:#{@feature.name}, manolito)</strong><br>will match if manolito is in the active users list OR (The user matches the percentage AND the user is in one of the active groups)
   .flex.items-center.justify-end
     form action=delete_feature_path(@feature.name) method='POST'
       button.mr-5.text-gray-600(class='hover:underline' type='submit' onclick="return confirm('Are you sure you want to delete #{sanitized_name(@feature.name)}?')")
@@ -75,3 +88,18 @@ main.p-6.bg-gray-100.max-w-lg.w-full.text-sm.rounded-sm
 - history_events = @rollout.respond_to?(:logging) ? @rollout.logging.events(@feature.name).reverse : []
 
 == slim :"features/partials/event_log", locals: { events: history_events }
+
+// Add JavaScript for collapsible functionality at the bottom of the file
+javascript:
+  function toggleCollapsible(id) {
+    const element = document.getElementById(id);
+    const toggle = document.getElementById('matching-toggle');
+    
+    if (element.style.display === 'none') {
+      element.style.display = 'block';
+      toggle.innerHTML = '▼';
+    } else {
+      element.style.display = 'none';
+      toggle.innerHTML = '▶';
+    }
+  }
