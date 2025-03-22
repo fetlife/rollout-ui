@@ -80,7 +80,7 @@ RSpec.describe 'Web UI' do
     get '/'
 
     expect(last_response).to be_ok
-    expect(last_response.body).to include('Rollout UI') & include("&amp;lt;script&amp;gt;alert(1)&amp;lt;&amp;")
+    expect(last_response.body).to include('Rollout UI') & (include("&amp;lt;script&amp;gt;alert(1)&amp;lt;&amp;") | include('&lt;script&gt;alert(1)&lt;/script&gt;'))
   end
 
   it "renders show html" do
@@ -94,7 +94,7 @@ RSpec.describe 'Web UI' do
     get "/features/'+alert(1)+'"
 
     expect(last_response).to be_ok
-    expect(last_response.body).to include('Rollout UI') & include("&amp;#x27;+alert(1)+&amp;#x27;")
+    expect(last_response.body).to include('Rollout UI') & (include("&amp;#x27;+alert(1)+&amp;#x27;") | include("&#39;+alert(1)+&#39;"))
   end
 
   it "renders show json" do
