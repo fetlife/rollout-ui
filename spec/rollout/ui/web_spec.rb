@@ -6,7 +6,9 @@ RSpec.describe 'Web UI' do
   include Rack::Test::Methods
 
   def app
-    Rollout::UI::Web
+    Rollout::UI::Web.tap do |app|
+      app.set :host_authorization, skip: true
+    end
   end
 
   it "renders index html" do
