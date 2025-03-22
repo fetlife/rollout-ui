@@ -43,4 +43,4 @@
                 = event.data
 
             td.py-2.text-right.whitespace-nowrap.pl-3.w-1/6
-              span title=event.created_at.strftime('%Y-%m-%d %H:%M %Z') = time_ago(event.created_at)
+              span title=event.created_at.strftime(Rollout::UI.config.timestamp_format) = time_ago(event.created_at)

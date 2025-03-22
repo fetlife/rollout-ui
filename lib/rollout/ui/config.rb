@@ -9,7 +9,12 @@ module Rollout::UI
       instance
       actor
       actor_url
+      timestamp_format
     ].freeze
+
+    DEFAULT_VALUES = {
+      timestamp_format: '%Y-%m-%d %H:%M %Z'
+    }.freeze
 
     KEYS.each do |key|
       define_method(key) do |&block|
@@ -17,6 +22,8 @@ module Rollout::UI
 
         if block
           @blocks[key] = block
+        elsif DEFAULT_VALUES.key?(key)
+          DEFAULT_VALUES[key]
         else
           raise ArgumentError, "#{key}: block is required"
         end
@@ -29,7 +36,10 @@ module Rollout::UI
       @blocks ||= {}
       block = @blocks[key]
 
-      return if block.nil?
+      if block.nil?
+        return DEFAULT_VALUES[key] if DEFAULT_VALUES.key?(key)
+        return nil
+      end
 
       if scope
         scope.instance_eval(&block)
@@ -39,7 +49,7 @@ module Rollout::UI
     end
 
     def defined?(key)
-      !@blocks.nil? && @blocks.key?(key)
+      (@blocks&.key?(key)) || DEFAULT_VALUES.key?(key)
     end
   end
 end
