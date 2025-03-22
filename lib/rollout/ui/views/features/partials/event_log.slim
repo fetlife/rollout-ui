@@ -32,7 +32,7 @@
                     ' #{event.context[:actor]}
                 - else
                   ' unidentified user
-                - changes = event.data.fetch(:before).keys.map do |key|
+                - changes = event.data.fetch(:before).keys.reject { |key| key.to_s == 'data.updated_at' }.map do |key|
                   - before = format_change_value(event.data.fetch(:before).fetch(key))
                   - after = format_change_value(event.data.fetch(:after).fetch(key))
                   - "#{format_change_key(key)} from #{before} to #{after}"
@@ -43,4 +43,4 @@
                 = event.data
 
             td.py-2.text-right.whitespace-nowrap.pl-3.w-1/6
-              = time_ago(event.created_at)
+              span title=event.created_at.strftime('%Y-%m-%d %H:%M %Z') = time_ago(event.created_at)
