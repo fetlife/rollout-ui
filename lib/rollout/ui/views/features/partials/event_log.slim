@@ -7,22 +7,22 @@
   .w-8.h-1.bg-gray-300.my-10
 
   .overflow-auto.scrolling-touch
-    table.text-sm.w-100.text-left.w-full
+    table.text-sm.w-100.text-left.w-full.table-fixed
       - if show_header
         thead.font-semibold.text-gray-600.border-b.border-gray-200
           - if show_feature
-            th.pb-2.pr-3 Feature
-          th.pb-2.pr-3 Action
-          th.pl-2
+            th.pb-2.pr-3.w-1/6 Feature
+          th.pb-2.pr-3.w-2/3 Action
+          th.pl-2.w-1/6
 
       tbody.text-gray-600.border-t.border-gray-200
         - events.each do |event|
           tr.border-b.border-gray-200
             - if show_feature
-              td.py-2.whitespace-no-wrap
+              td.py-2.whitespace-no-wrap.w-1/6
                 a.text-blue-600(href=feature_path(event.feature) class='hover:text-blue-700 hover:underline')
                   = event.feature
-            td.py-2.pr-3.whitespace-no-wrap
+            td.py-2.pr-3.whitespace-normal.w-2/3
               - if event.name == "update"
                 - if event.context && event.context[:actor]
                   - if config.defined?(:actor_url)
@@ -32,7 +32,7 @@
                     ' #{event.context[:actor]}
                 - else
                   ' unidentified user
-                - changes = event.data.fetch(:before).keys.map do |key|
+                - changes = event.data.fetch(:before).keys.reject { |key| key.to_s == 'data.updated_at' }.map do |key|
                   - before = format_change_value(event.data.fetch(:before).fetch(key))
                   - after = format_change_value(event.data.fetch(:after).fetch(key))
                   - "#{format_change_key(key)} from #{before} to #{after}"
@@ -42,5 +42,5 @@
               - else
                 = event.data
 
-            td.flex.items-center.py-2.justify-end.whitespace-no-wrap.pl-3
-              = time_ago(event.created_at)
+            td.py-2.text-right.whitespace-nowrap.pl-3.w-1/6
+              span title=event.created_at.strftime(Rollout::UI.config.timestamp_format) = time_ago(event.created_at)
