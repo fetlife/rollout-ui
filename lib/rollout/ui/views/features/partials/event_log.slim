@@ -38,7 +38,10 @@
                   - "#{format_change_key(key)} from #{before} to #{after}"
 
                 ' changed
-                = changes.join(', ')
+                - unless changes.empty?
+                  = changes.join(', ')
+                - else
+                  ' nothing!
               - else
                 = event.data
 
