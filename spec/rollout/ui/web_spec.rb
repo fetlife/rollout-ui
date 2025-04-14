@@ -116,4 +116,39 @@ RSpec.describe 'Web UI' do
 
     ROLLOUT.delete(:fake_test_feature_for_rollout_ui_webspec)
   end
+
+  describe "CSRF Protection" do
+    it "blocks POST without authenticity_token" do
+      get "/features/new"
+
+      post "/features/new", { name: "beta_feature" }
+
+      expect(last_response.status).to eq(403)
+    end
+
+    it "blocks POST with invalid authenticity_token" do
+      get "/features/new"
+
+      post "/features/new", {
+        name: "fake_feature",
+        authenticity_token: "invalid-token"
+      }
+
+      expect(last_response.status).to eq(403)
+    end
+
+    it "allows POST with valid authenticity_token" do
+      get "/features/new"
+      token = last_request.env['rack.session'][:csrf]
+
+      post "/features/new", {
+        name: "secure_feature",
+        authenticity_token: token
+      }
+
+      expect(last_response.status).to eq(302)
+      follow_redirect!
+      expect(last_response.body).to include("secure_feature")
+    end
+  end
 end

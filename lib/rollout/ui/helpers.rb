@@ -5,6 +5,10 @@ require "rollout/ui/version"
 
 module Rollout::UI
   module Helpers
+    def csrf_token
+      session[:csrf] ||= Rack::Protection::AuthenticityToken.random_token
+    end
+    
     def stylesheet_path(name)
       "#{request.script_name}/css/#{name}.css"
     end
