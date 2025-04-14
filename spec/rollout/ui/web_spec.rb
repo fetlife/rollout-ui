@@ -150,5 +150,85 @@ RSpec.describe 'Web UI' do
       follow_redirect!
       expect(last_response.body).to include("secure_feature")
     end
+
+    it "blocks POST to update feature without authenticity_token" do
+      ROLLOUT.activate(:test_feature)
+      get "/features/test_feature"
+
+      post "/features/test_feature", {
+        percentage: 50,
+        groups: ["test_group"]
+      }
+
+      expect(last_response.status).to eq(403)
+      ROLLOUT.delete(:test_feature)
+    end
+
+    it "blocks POST to update feature with invalid authenticity_token" do
+      ROLLOUT.activate(:test_feature)
+      get "/features/test_feature"
+
+      post "/features/test_feature", {
+        percentage: 50,
+        groups: ["test_group"],
+        authenticity_token: "invalid-token"
+      }
+
+      expect(last_response.status).to eq(403)
+      ROLLOUT.delete(:test_feature)
+    end
+
+    it "allows POST to update feature with valid authenticity_token" do
+      ROLLOUT.activate(:test_feature)
+      get "/features/test_feature"
+      token = last_request.env['rack.session'][:csrf]
+
+      post "/features/test_feature", {
+        percentage: 50,
+        groups: ["test_group"],
+        authenticity_token: token
+      }
+
+      expect(last_response.status).to eq(302)
+      follow_redirect!
+      expect(last_response.body).to include("test_feature")
+      ROLLOUT.delete(:test_feature)
+    end
+
+    it "blocks POST to delete feature without authenticity_token" do
+      ROLLOUT.activate(:test_feature)
+      get "/features/test_feature"
+
+      post "/features/test_feature/delete"
+
+      expect(last_response.status).to eq(403)
+      ROLLOUT.delete(:test_feature)
+    end
+
+    it "blocks POST to delete feature with invalid authenticity_token" do
+      ROLLOUT.activate(:test_feature)
+      get "/features/test_feature"
+
+      post "/features/test_feature/delete", {
+        authenticity_token: "invalid-token"
+      }
+
+      expect(last_response.status).to eq(403)
+      ROLLOUT.delete(:test_feature)
+    end
+
+    it "allows POST to delete feature with valid authenticity_token" do
+      ROLLOUT.activate(:test_feature)
+      get "/features/test_feature"
+      token = last_request.env['rack.session'][:csrf]
+
+      post "/features/test_feature/delete", {
+        authenticity_token: token
+      }
+
+      expect(last_response.status).to eq(302)
+      follow_redirect!
+      expect(last_response.body).not_to include("test_feature")
+    end
   end
 end
