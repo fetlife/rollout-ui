@@ -3,6 +3,13 @@
 require_relative 'lib/rollout/ui'
 require 'redis'
 
+require "rack/protection"
+use Rack::Session::Cookie,
+  key: 'rack.session',
+  path: '/',
+  secret: ENV.fetch('SECRET_KEY_BASE', 'development_secret_key_base_123456789012345678901234567890123456789012345678901234567890')
+use Rack::Protection::AuthenticityToken
+
 redis_host = ENV.fetch('REDIS_HOST', 'localhost')
 redis_port = ENV.fetch('REDIS_PORT', '6379')
 redis_db = ENV.fetch('REDIS_DB', '10')

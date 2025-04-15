@@ -11,6 +11,10 @@ module Rollout::UI
     set :static, true
     set :public_folder, File.dirname(__FILE__) + '/public'
 
+    enable :sessions
+    set :protection, except: :http_origin
+    use Rack::Protection::AuthenticityToken
+
     helpers Helpers
 
     get '/' do
