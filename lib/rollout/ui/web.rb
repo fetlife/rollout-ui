@@ -61,7 +61,7 @@ module Rollout::UI
         end
       end
 
-      redirect index_path
+      redirect feature_path(params[:feature_name])
     end
 
     post '/features/:feature_name/activate-percentage' do
