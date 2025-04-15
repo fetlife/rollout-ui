@@ -6,7 +6,9 @@ RSpec.describe 'Web UI' do
   include Rack::Test::Methods
 
   def app
-    Rollout::UI::Web
+    Rollout::UI::Web.tap do |app|
+      app.set :host_authorization, skip: true
+    end
   end
 
   it "renders index html" do
@@ -72,6 +74,15 @@ RSpec.describe 'Web UI' do
     ROLLOUT.delete(:fake_test_feature_for_rollout_ui_webspec)
   end
 
+  it "rescapes javascript in the action index" do
+    ROLLOUT.activate(:'<script>alert(1)</script>')
+
+    get '/'
+
+    expect(last_response).to be_ok
+    expect(last_response.body).to include('Rollout UI') & (include("&amp;lt;script&amp;gt;alert(1)&amp;lt;&amp;") | include('&lt;script&gt;alert(1)&lt;/script&gt;'))
+  end
+
   it "renders show html" do
     get '/features/test'
 
@@ -79,12 +90,19 @@ RSpec.describe 'Web UI' do
     expect(last_response.body).to include('Rollout UI') & include('test')
   end
 
+  it "escapes javascript in the action show" do
+    get "/features/'+alert(1)+'"
+
+    expect(last_response).to be_ok
+    expect(last_response.body).to include('Rollout UI') & (include("&amp;#x27;+alert(1)+&amp;#x27;") | include("&#39;+alert(1)+&#39;"))
+  end
+
   it "renders show json" do
     ROLLOUT.activate(:fake_test_feature_for_rollout_ui_webspec)
     header 'Accept', 'application/json'
- 
+
     get '/features/fake_test_feature_for_rollout_ui_webspec'
- 
+
     expect(last_response).to be_ok
     expect(last_response.headers).to include('Content-Type' => 'application/json')
     response = JSON.parse(last_response.body)
