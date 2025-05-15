@@ -2,7 +2,7 @@ a.text-sm.text-blue-600(href=index_path class='hover:text-blue-700 hover:underli
   ' &larr; back to overview
 
 - if params[:error]
-  pre.text-red-500= params[:error]
+  pre.text-red-500= sanitized_name(params[:error].strip)
 h2.font-semibold.text-xl.text-gray-500.pt-12
   = @feature.name
 
