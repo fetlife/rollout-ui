@@ -113,7 +113,7 @@ REDIS_HOST=localhost REDIS_PORT=6379 REDIS_DB=10 bundle exec rerun rackup
 
 1. Bump version: `rake version:patch` (or `minor`/`major`)
 2. Commit and tag: `git commit -am "Bump version" && git tag v0.7.3`
-3. Push: `git push origin main --tags`
+3. Push: `git push origin master --tags`
 
 The GitHub Actions workflow will automatically publish to RubyGems when tags are pushed.
 
