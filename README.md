@@ -92,6 +92,8 @@ end
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/fetlife/rollout-ui.
 
+### Development
+
 To run this project for development in isolation:
 
 ```sh
@@ -106,6 +108,14 @@ Alternatively you can also configure which Redis with:
 ```sh
 REDIS_HOST=localhost REDIS_PORT=6379 REDIS_DB=10 bundle exec rerun rackup
 ```
+
+### Releasing
+
+1. Bump version: `rake version:patch` (or `minor`/`major`)
+2. Commit and tag: `git commit -am "Bump version" && git tag v0.7.3`
+3. Push: `git push origin master --tags`
+
+The GitHub Actions workflow will automatically publish to RubyGems when tags are pushed.
 
 ## License
 
