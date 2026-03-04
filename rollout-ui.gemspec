@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ['FetLife']
   spec.email         = ['dev@fetlife.com']
 
-  spec.summary       = %q{}
-  spec.description   = %q{}
+  spec.summary       = %q{Minimalist web ui for the rollout gem}
+  spec.description   = %q{Rack-mountable app to use and configure feature flags via the rollout gem}
   spec.homepage      = 'https://github.com/fetlife/rollout-ui'
   spec.license       = 'MIT'
 
