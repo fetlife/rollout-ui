@@ -92,16 +92,32 @@ end
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/fetlife/rollout-ui.
 
+### Development Setup
+
+This project uses [mise](https://mise.jdx.dev/) for managing development tools.
+
+Install mise if you haven't already:
+
+```sh
+curl https://mise.run | sh
+```
+
+Then install the required tools and dependencies:
+
+```sh
+mise install
+bundle install
+```
+
 To run this project for development in isolation:
 
 ```sh
-bundle install
 bundle exec rerun rackup
 ```
 
 And visit [http://localhost:9292/](http://localhost:9292/).
 
-Alternatively you can also configure which Redis with:
+Alternatively, you can also configure which Redis with:
 
 ```sh
 REDIS_HOST=localhost REDIS_PORT=6379 REDIS_DB=10 bundle exec rerun rackup
