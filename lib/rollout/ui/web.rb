@@ -11,7 +11,7 @@ module Rollout::UI
   class Web
     PUBLIC_PATH = File.expand_path('public', __dir__)
 
-    NOT_FOUND = ->(env) { [404, { 'content-type' => 'text/plain' }, ['Not Found']] }
+    NOT_FOUND = ->(env) { [404, { 'content-type' => 'text/plain', 'x-cascade' => 'pass' }, ['Not Found']] }
 
     def initialize
       @static = Rack::Static.new(NOT_FOUND, urls: ['/css'], root: PUBLIC_PATH)
@@ -48,14 +48,29 @@ module Rollout::UI
       def call(env)
         @request = Rack::Request.new(env)
         @response = Rack::Response.new
+        response['x-content-type-options'] = 'nosniff'
+        response['x-frame-options'] = 'SAMEORIGIN'
+        response['x-xss-protection'] = '1; mode=block'
 
-        route = ROUTES.find { |verb, pattern, _| verb == request.request_method.to_sym && pattern.match?(request.path_info) }
+        # Rack::URLMap strips the mount prefix from PATH_INFO, leaving "" (not
+        # "/") when a mounted app is requested at its exact mount point.
+        path_info = request.path_info
+        path_info = '/' if path_info.empty?
+
+        method = request.request_method.to_sym
+        lookup_method = method == :HEAD ? :GET : method
+        route = ROUTES.find { |verb, pattern, _| verb == lookup_method && pattern.match?(path_info) }
         return not_found unless route
 
         _, pattern, action = route
-        @params = build_params(pattern.match(request.path_info).named_captures)
+        begin
+          @params = build_params(pattern.match(path_info).named_captures)
+        rescue Rack::BadRequest => e
+          return bad_request(e)
+        end
 
         send(action)
+        response.body = [] if method == :HEAD
         response.finish
       end
 
@@ -141,24 +156,53 @@ module Rollout::UI
       def not_found
         response.status = 404
         response['content-type'] = 'text/plain'
+        response['x-cascade'] = 'pass'
         response.write('Not Found')
         response.finish
       end
 
+      def bad_request(error)
+        response.status = 400
+        response['content-type'] = 'text/plain'
+        response.write("Bad Request: #{error.message}")
+        response.finish
+      end
+
       def build_params(route_params)
+        route_params = route_params.transform_values { |value| Rack::Utils.unescape_path(value) }
+
         request.params.merge(route_params).each_with_object({}) do |(key, value), hash|
           hash[key.to_s] = value
           hash[key.to_sym] = value
         end
       end
 
+      # Mirrors Sinatra's own `redirect`: browsers replaying a 302 after a
+      # non-GET request may re-issue the original method, so redirects away
+      # from a POST use 303 See Other instead.
       def redirect_to(location)
-        response.redirect(location)
+        http_version = request.env['SERVER_PROTOCOL'] || request.env['HTTP_VERSION']
+        status = (http_version == 'HTTP/1.1' && request.request_method != 'GET') ? 303 : 302
+        response.redirect(location, status)
       end
 
       def json(data)
+        response.headers.delete('x-frame-options')
+        response.headers.delete('x-xss-protection')
         response['content-type'] = 'application/json'
         response.write(data.to_json)
+      end
+
+      # Exposed so `Rollout::UI.configure { actor { env[...] } }` /
+      # `actor { session[...] }` blocks keep working when instance_eval'd
+      # against this dispatcher, matching Sinatra's own request-scoped
+      # `env`/`session` helpers.
+      def env
+        request.env
+      end
+
+      def session
+        request.session
       end
 
       def render_view(name)
