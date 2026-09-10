@@ -37,6 +37,61 @@ RSpec.describe 'Web UI' do
     ROLLOUT.delete(:fake_test_feature_for_rollout_ui_webspec)
   end
 
+  context "with global history" do
+    let(:rollout) { Rollout.new(REDIS, logging: { global: true }) }
+    let(:feature_name) { :history_feature_for_rollout_ui_webspec }
+
+    around do |example|
+      previous_instance = Rollout::UI.config.get(:instance)
+      history_instance = rollout
+      Rollout::UI.configure { instance { history_instance } }
+      example.run
+    ensure
+      Rollout::UI.configure { instance { previous_instance } }
+      rollout.delete(feature_name)
+    end
+
+    it "links existing features in history" do
+      rollout.activate(feature_name)
+
+      get '/'
+
+      expect(last_response).to be_ok
+      history = last_response.body.split('History</h2>', 2).fetch(1)
+      expect(history).to match(%r{<a\b[^>]*href="/features/#{feature_name}"[^>]*>#{feature_name}</a>})
+    end
+
+    it "keeps deleted feature names as plain text without recreating them" do
+      rollout.activate(feature_name)
+      rollout.delete(feature_name)
+
+      expect { get '/' }.not_to change { rollout.features }
+
+      expect(last_response).to be_ok
+      history = last_response.body.split('History</h2>', 2).fetch(1)
+      expect(history).to match(%r{<td\b[^>]*>#{feature_name}</td>})
+      expect(history).not_to include("href=\"/features/#{feature_name}\"")
+      expect(rollout.features).not_to include(feature_name)
+      expect(REDIS.exists?("feature:#{feature_name}")).to be false
+    end
+
+    context "with HTML in a deleted feature name" do
+      let(:feature_name) { :'<script>alert(42)</script>' }
+
+      it "escapes the name in history" do
+        rollout.activate(feature_name)
+        rollout.delete(feature_name)
+
+        get '/'
+
+        expect(last_response).to be_ok
+        history = last_response.body.split('History</h2>', 2).fetch(1)
+        expect(history).to match(%r{<td\b[^>]*>&lt;script&gt;alert\(42\)&lt;/script&gt;</td>})
+        expect(history).not_to include(feature_name.to_s)
+      end
+    end
+  end
+
   it "renders index json filtered by user and group" do
     ROLLOUT.deactivate(:fake_test_feature_for_rollout_ui_webspec)
     ROLLOUT.activate_user(:fake_test_feature_for_rollout_ui_webspec, 'fake_user')

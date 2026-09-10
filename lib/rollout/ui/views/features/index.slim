@@ -60,4 +60,4 @@ h2.font-semibold.text-xl.text-gray-500.pt-12.flex.items-center
 
 - global_history_events = @rollout.respond_to?(:logging) ? @rollout.logging.global_events.reverse : []
 
-== slim :"features/partials/event_log", locals: { events: global_history_events, show_feature: true, show_header: true }
+== slim :"features/partials/event_log", locals: { events: global_history_events, show_feature: true, show_header: true, existing_features: @features }
