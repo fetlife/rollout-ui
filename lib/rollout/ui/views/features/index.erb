@@ -1,0 +1,75 @@
+<h2 class="font-semibold text-xl text-gray-500 pt-12 flex items-center">
+  <div class="flex-auto">Features<span class="text-sm p-1 bg-gray-100 ml-1 rounded-sm font-bold leading-none"><%= h(@features.count) %></span></div>
+  <form class="flex-none" action="<%= h(new_feature_path) %>" method="GET">
+    <button class="text-sm text-gray-600 p-3 bg-gray-100 ml-1 rounded-sm font-bold leading-none transition-colors duration-150 hover:bg-gray-200" type="submit">Add New Feature </button>
+  </form>
+</h2>
+
+<div class="w-8 h-1 bg-gray-300 my-10"></div>
+
+<div class="overflow-auto scrolling-touch">
+  <table class="text-sm w-100 text-left w-full">
+    <thead class="font-semibold text-gray-500 border-b border-gray-200">
+      <th class="pb-2 pr-3">Name</th>
+      <th class="pb-2 pr-3">Percentage</th>
+      <th class="pb-2 pr-3">Groups</th>
+      <th class="pb-2 pr-3">Users</th>
+      <% if @rollout.respond_to?(:logging) %>
+        <th class="pb-2 pr-3">Updated</th>
+      <% end %>
+      <th class="pl-2"></th>
+    </thead>
+
+    <tbody class="text-gray-600">
+      <% @features.each do |feature_name| %>
+        <% feature = @rollout.get(feature_name) %>
+        <tr class="border-b border-gray-200">
+          <td class="py-2">
+            <a class="text-blue-600 hover:text-blue-700 hover:underline" href="<%= h(feature_path(feature.name)) %>"><%= h(feature_name) %></a>
+            <div class="text-gray-500 text-xs"><%= h(feature.data['description']) %></div>
+          </td>
+          <td class="py-2 whitespace-no-wrap">
+            <% if feature.percentage == 0 %>
+              <span class="text-gray-400"><%= h(feature.percentage) %>%</span>
+            <% else %>
+              <%= h(feature.percentage) %>%
+            <% end %>
+          </td>
+          <td class="py-2 whitespace-no-wrap"><%= h(feature.groups.join(', ')) %></td>
+          <td class="py-2 whitespace-no-wrap">
+            <% if feature.users.count == 0 %>
+              <span class="text-gray-400"><%= h(feature.users.count) %></span>
+            <% else %>
+              <%= h(feature.users.count) %>
+            <% end %>
+          </td>
+          <% if @rollout.respond_to?(:logging) %>
+            <td class="py-2 whitespace-no-wrap">
+              <% updated_at = @rollout.logging.updated_at(feature_name) %>
+              <% if updated_at.nil? %>
+                <span class="text-gray-400">Never</span>
+              <% else %>
+                <span title="<%= h(updated_at.strftime(Rollout::UI.config.timestamp_format)) %>"><%= h(time_ago(updated_at)) %></span>
+              <% end %>
+            </td>
+          <% end %>
+          <td class="flex items-center py-2 justify-end whitespace-no-wrap pl-3">
+            <form action="<%= h(activate_percentage_feature_path(feature_name, 100)) %>" method="POST">
+              <button class="p-3 bg-gray-100 ml-1 rounded-sm font-bold leading-none transition-colors duration-150 hover:bg-gray-200" type="submit" onclick="return confirm(<%= h("Are you sure you want activate #{feature_name} to 100%?".to_json) %>)">100% </button>
+            </form>
+            <form action="<%= h(activate_percentage_feature_path(feature_name, 0)) %>" method="POST">
+              <button class="p-3 bg-gray-100 ml-1 rounded-sm font-bold leading-none transition-colors duration-150 hover:bg-gray-200" type="submit" onclick="return confirm(<%= h("Are you sure you want activate #{feature_name} to 0%?".to_json) %>)">0% </button>
+            </form>
+            <form action="<%= h(delete_feature_path(feature_name)) %>" method="POST">
+              <button class="p-3 bg-gray-100 ml-1 rounded-sm font-bold leading-none transition-colors duration-150 hover:bg-gray-200" type="submit" onclick="return confirm(<%= h("Are you sure you want to delete #{feature_name}?".to_json) %>)">Delete </button>
+            </form>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<% global_history_events = @rollout.respond_to?(:logging) ? @rollout.logging.global_events.reverse : [] %>
+
+<%= erb :"features/partials/event_log", layout: false, locals: { events: global_history_events, show_feature: true, show_header: true } %>
