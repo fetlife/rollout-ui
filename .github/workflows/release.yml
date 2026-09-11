@@ -8,6 +8,9 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
     services:
       redis:
         image: redis:7-alpine
@@ -21,12 +24,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
       - name: Run tests
-        run: bundle exec rspec 
+        run: bundle exec rspec
+      - name: Release to RubyGems
+        uses: rubygems/release-gem@v1
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -34,13 +41,4 @@ jobs:
           name: ${{ github.ref_name }}
           generate_release_notes: true
           draft: false
-          prerelease: false 
-      - name: Set up RubyGems credentials
-        env:
-          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
-        run: |
-          mkdir -p ~/.gem
-          echo ":rubygems_api_key: $RUBYGEMS_API_KEY" > ~/.gem/credentials
-          chmod 0600 ~/.gem/credentials
-      - name: Release to RubyGems
-        run: bundle exec rake release
+          prerelease: false
