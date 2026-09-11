@@ -1,0 +1,65 @@
+<% show_feature ||= false %>
+<% show_header ||= false %>
+<% existing_features = existing_features.map(&:to_s) if show_feature %>
+
+<% if events.any? %>
+  <h2 class="font-semibold text-xl text-gray-500 pt-20 flex items-center">History</h2>
+  <div class="w-8 h-1 bg-gray-300 my-10"></div>
+
+  <div class="overflow-auto scrolling-touch">
+    <table class="text-sm w-100 text-left w-full">
+      <% if show_header %>
+        <thead class="font-semibold text-gray-600 border-b border-gray-200">
+          <% if show_feature %>
+            <th class="pb-2 pr-3 whitespace-nowrap">Feature</th>
+          <% end %>
+          <th class="pb-2 pr-3 w-full">Action</th>
+          <th class="pl-2 whitespace-nowrap" style="min-width: 160px;"></th>
+        </thead>
+      <% end %>
+
+      <tbody class="text-gray-600 border-t border-gray-200">
+        <% events.each do |event| %>
+          <tr class="border-b border-gray-200">
+            <% if show_feature %>
+              <td class="py-2 pr-3 whitespace-nowrap">
+                <% if existing_features.include?(event.feature.to_s) %>
+                  <a class="text-blue-600 hover:text-blue-700 hover:underline" href="<%= h(feature_path(event.feature)) %>"><%= h(event.feature) %></a>
+                <% else %>
+                  <%= h(event.feature) %>
+                <% end %>
+              </td>
+            <% end %>
+            <td class="py-2 pr-3 break-words w-full">
+              <% if event.name == "update" %>
+                <% if event.context && event.context[:actor] %>
+                  <% if config.defined?(:actor_url) %>
+                    <a class="underline" href="<%= h(config.get(:actor_url, event.context[:actor])) %>" target="_blank"><%= h(event.context[:actor]) %></a>
+                  <% else %>
+                    <%= h(event.context[:actor]) %>
+                  <% end %>
+                <% else %>
+                  unidentified user
+                <% end %>
+                <%
+                  changes = event.data.fetch(:before).keys.reject { |key| key.to_s == 'data.updated_at' }.map do |key|
+                    before = format_change_value(event.data.fetch(:before).fetch(key))
+                    after = format_change_value(event.data.fetch(:after).fetch(key))
+                    "#{format_change_key(key)} from #{before} to #{after}"
+                  end
+                %>
+                changed <%= h(changes.empty? ? 'nothing!' : changes.join(', ')) %>
+              <% else %>
+                <%= h(event.data) %>
+              <% end %>
+            </td>
+
+            <td class="py-2 text-right whitespace-nowrap pl-3" style="min-width: 160px;">
+              <span title="<%= h(event.created_at.strftime(Rollout::UI.config.timestamp_format)) %>"><%= h(time_ago(event.created_at)) %></span>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>
