@@ -72,4 +72,4 @@
 
 <% global_history_events = @rollout.respond_to?(:logging) ? @rollout.logging.global_events.reverse : [] %>
 
-<%= erb :"features/partials/event_log", layout: false, locals: { events: global_history_events, show_feature: true, show_header: true } %>
+<%= erb :"features/partials/event_log", layout: false, locals: { events: global_history_events, show_feature: true, show_header: true, existing_features: @features } %>
