@@ -109,8 +109,8 @@ module Rollout::UI
       }
     end
 
-    def sanitized_name(feature_name)
-      Rack::Utils.escape_html(feature_name)
+    def h(value)
+      Rack::Utils.escape_html(value)
     end
   end
 end

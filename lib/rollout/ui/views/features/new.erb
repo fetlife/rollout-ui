@@ -1,0 +1,16 @@
+<a class="text-sm text-blue-600 hover:text-blue-700 hover:underline" href="<%= h(index_path) %>">&larr; back to overview</a>
+
+<h2 class="font-semibold text-xl text-gray-500 pt-12">New Feature </h2>
+
+<div class="w-8 h-1 bg-gray-300 my-10"></div>
+
+<form class="p-6 bg-gray-100 max-w-lg w-full text-sm rounded-sm" action="<%= h(new_feature_path) %>" method="POST">
+  <div class="mb-5">
+    <label class="block text-gray-500 mb-2" for="name">Name</label>
+    <input class="appearance-none border rounded-sm w-full py-2 px-4 text-gray-600 leading-relaxed bg-white hover:border-gray-500" name="name" id="name">
+  </div>
+
+  <div class="flex items-center justify-end">
+    <button class="py-4 px-5 bg-gray-700 text-gray-200 rounded-sm font-bold leading-none transition-colors duration-200 hover:bg-gray-800" type="submit">Create</button>
+  </div>
+</form>

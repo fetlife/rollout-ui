@@ -23,12 +23,12 @@ module Rollout::UI
           end
         )
       else
-        slim :'features/index'
+        erb :'features/index'
       end
     end
 
     get '/features/new' do
-      slim :'features/new'
+      erb :'features/new'
     end
 
     post '/features/new' do
@@ -42,7 +42,7 @@ module Rollout::UI
       if json_request?
         json(feature_to_hash(@feature))
       else
-        slim :'features/show'
+        erb :'features/show'
       end
     end
 

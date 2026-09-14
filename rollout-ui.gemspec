@@ -25,7 +25,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'rollout', '>= 3.0', '< 4'
   spec.add_dependency 'sinatra', ['>= 2.0', '< 5.0']
   spec.add_dependency 'sinatra-contrib', ['>= 2.0', '< 5.0']
-  spec.add_dependency 'slim', ['>= 3.0', '< 6.0']
 
   spec.add_development_dependency 'rollout-redis'
   spec.add_development_dependency 'bundler', '>= 1.17'

@@ -1,0 +1,52 @@
+<a class="text-sm text-blue-600 hover:text-blue-700 hover:underline" href="<%= h(index_path) %>">&larr; back to overview </a>
+
+<% if params[:error] %>
+  <pre class="text-red-500"><%= h(params[:error]) %></pre>
+<% end %>
+<h2 class="font-semibold text-xl text-gray-500 pt-12"><%= h(@feature.name) %></h2>
+
+<div class="w-8 h-1 bg-gray-300 my-10"></div>
+<main class="p-6 bg-gray-100 max-w-lg w-full text-sm rounded-sm">
+  <form id="updateFormSubmit" action="<%= h(feature_path(@feature.name)) %>" method="POST">
+    <input type="hidden" name="last_updated_at" value="<%= h(@feature.data['updated_at']) %>">
+    <div class="mb-5">
+      <label class="block text-gray-500 mb-2" for="description">Description</label>
+      <input class="appearance-none border rounded-sm w-full py-2 px-4 text-gray-600 leading-relaxed bg-white hover:border-gray-500" name="description" id="description" value="<%= h(@feature.data['description']) %>">
+    </div>
+
+    <div class="mb-5">
+      <label class="block text-gray-500 mb-2" for="groups">Groups<span class="ml-1 text-gray-400">(multi-select)</span></label>
+      <select class="block appearance-none w-full bg-white border border-gray-300 px-4 py-3 rounded-sm leading-relaxed" name="groups[]" id="groups" multiple size="<%= h(@rollout.groups.count + 1) %>">
+        <option class="py-1 px-1" value=""<% if @feature.groups.count == 0 %> selected<% end %>>(none)</option>
+        <% @rollout.groups.each do |group| %>
+          <option class="py-1 px-1" value="<%= h(group) %>"<% if @feature.groups.include?(group) %> selected<% end %>><%= h(group) %></option>
+        <% end %>
+      </select>
+    </div>
+
+    <div class="mb-5">
+      <label class="block text-gray-500 mb-2" for="percentage">Percentage</label>
+      <input class="appearance-none border rounded-sm w-full py-2 px-4 text-gray-600 leading-relaxed bg-white hover:border-gray-500" name="percentage" id="percentage" value="<%= h(@feature.percentage) %>" type="number" step="0.1">
+    </div>
+
+    <div class="mb-5">
+      <label class="block text-gray-500 mb-2">Users</label>
+      <% if @feature.users.count > 150 %>
+        <div class="appearance-none border rounded-sm w-full py-2 px-4 text-gray-600 leading-relaxed bg-gray-100"><%= h(@feature.users.count) %></div>
+      <% else %>
+        <textarea class="appearance-none border rounded-sm w-full py-2 px-4 text-gray-600 leading-relaxed bg-white hover:border-gray-500" name="users" id="users" value="<%= h(@feature.users.join(', ')) %>" rows="2"><%= h(@feature.users.join(', ')) %></textarea>
+      <% end %>
+    </div>
+  </form>
+
+  <div class="flex items-center justify-end">
+    <form action="<%= h(delete_feature_path(@feature.name)) %>" method="POST">
+      <button class="mr-5 text-gray-600 hover:underline" type="submit" onclick="return confirm(<%= h("Are you sure you want to delete #{@feature.name}?".to_json) %>)">Delete</button>
+    </form>
+    <button class="py-4 px-5 bg-gray-700 text-gray-200 rounded-sm font-bold leading-none transition-colors duration-200 hover:bg-gray-800" type="submit" form="updateFormSubmit">Update</button>
+  </div>
+</main>
+
+<% history_events = @rollout.respond_to?(:logging) ? @rollout.logging.events(@feature.name).reverse : [] %>
+
+<%= erb :"features/partials/event_log", layout: false, locals: { events: history_events } %>
