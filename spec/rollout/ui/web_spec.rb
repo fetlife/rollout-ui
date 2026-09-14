@@ -39,7 +39,7 @@ RSpec.describe 'Web UI' do
   end
 
   context "with global history" do
-    let(:rollout) { Rollout.new(REDIS, logging: { global: true }) }
+    let(:rollout) { Rollout.new(adapter: Rollout::Adapters::Redis.new(REDIS), logging: { global: true }) }
     let(:feature_name) { :history_feature_for_rollout_ui_webspec }
 
     around do |example|

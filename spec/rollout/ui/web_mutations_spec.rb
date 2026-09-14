@@ -94,7 +94,7 @@ RSpec.describe "Web UI mutations" do
 
   it "keeps existing history when deleting without logging" do
     ROLLOUT.activate_percentage(:chat, 25)
-    silent = Rollout.new(backend: Rollout::Redis::Backend.new(REDIS))
+    silent = Rollout.new(adapter: Rollout::Adapters::Redis.new(REDIS))
     Rollout::UI.configure { instance { silent } }
 
     post "/features/chat/delete"
@@ -123,7 +123,7 @@ RSpec.describe "Web UI mutations" do
   end
 
   it "continues to index, show, and edit when logging is disabled" do
-    silent = Rollout.new(backend: Rollout::Redis::Backend.new(REDIS))
+    silent = Rollout.new(adapter: Rollout::Adapters::Redis.new(REDIS))
     Rollout::UI.configure { instance { silent } }
 
     get "/"

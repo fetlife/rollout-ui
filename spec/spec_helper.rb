@@ -1,6 +1,6 @@
 require "bundler/setup"
 require "rollout/ui"
-require "rollout/redis"
+require "rollout/adapters/redis"
 require "rack/test"
 require "pry"
 require "redis"
@@ -11,7 +11,7 @@ REDIS = ::Redis.new(
   db: ENV.fetch("REDIS_DB", "7"),
 )
 ROLLOUT = Rollout.new(
-  backend: Rollout::Redis::Backend.new(REDIS),
+  adapter: Rollout::Adapters::Redis.new(REDIS),
   logging: { history_length: 100, global: true },
 )
 

@@ -12,12 +12,12 @@ you can just mount as a Rack app and it will just work.
 Add it to your application's Gemfile:
 
 ```ruby
-gem "rollout"
-gem "rollout-redis"
+gem "rollout", "~> 3.1"
+gem "rollout-redis-adapter", "~> 0.1"
 gem "rollout-ui"
 ```
 
-`rollout-ui` is backend-neutral. Applications using Redis should also add `rollout` 3 and `rollout-redis`, then pass a configured Rollout instance into the UI.
+`rollout-ui` 0.9+ requires Rollout 3.1 and does not support Rollout 2.x. The UI is backend-neutral: applications using Redis should add `rollout-redis-adapter` and pass a configured Rollout instance into the UI.
 
 Mount it
 
@@ -77,11 +77,13 @@ To get the most out of **rollout-ui**, we recommend you to turn on logging
 on your rollout instance to see history of changes in the UI.
 
 ```ruby
-require "rollout/redis"
+require "redis"
+require "rollout"
+require "rollout/adapters/redis"
 
-$redis = ::Redis.current
+$redis = Redis.new
 $rollout = Rollout.new(
-  backend: Rollout::Redis::Backend.new($redis),
+  adapter: Rollout::Adapters::Redis.new($redis),
   logging: { history_length: 100, global: true },
 )
 ```
