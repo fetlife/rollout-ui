@@ -4,8 +4,9 @@ require "rollout/adapters/redis"
 require "rack/test"
 require "pry"
 require "redis"
+require "redis/namespace"
 
-REDIS = Redis.new
+REDIS = Redis::Namespace.new("rollout-ui-spec", redis: Redis.new)
 ROLLOUT = Rollout.new(
   adapter: Rollout::Adapters::Redis.new(REDIS),
   logging: { history_length: 100, global: true },
