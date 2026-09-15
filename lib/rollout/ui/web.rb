@@ -60,8 +60,8 @@ module Rollout::UI
           if params[:users]
             feature.users = params[:users].split(',').map(&:strip).uniq.sort
           end
-          feature.data.update(description: params[:description])
-          feature.data.update(updated_at: Time.now.to_i)
+          feature.data["description"] = params[:description]
+          feature.data["updated_at"] = Time.now.to_i
         end
       end
 
@@ -75,7 +75,7 @@ module Rollout::UI
       with_rollout_context(rollout, actor: actor) do
         rollout.with_feature(params[:feature_name]) do |feature|
           feature.percentage = params[:percentage].to_f.clamp(0.0, 100.0)
-          feature.data.update(updated_at: Time.now.to_i)
+          feature.data["updated_at"] = Time.now.to_i
         end
       end
 
