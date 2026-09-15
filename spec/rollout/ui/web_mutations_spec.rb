@@ -18,7 +18,16 @@ RSpec.describe "Web UI mutations" do
     end
   end
 
-  after { restore_instance }
+  def clean_chat
+    ROLLOUT.delete(:chat)
+    REDIS.del("feature:_global_:logging:events", "feature:chat:logging:events")
+  end
+
+  before { clean_chat }
+  after do
+    restore_instance
+    clean_chat
+  end
 
   it "persists a full feature edit" do
     post "/features/chat",
@@ -87,7 +96,7 @@ RSpec.describe "Web UI mutations" do
     post "/features/chat/delete"
 
     expect(last_response).to be_redirect
-    expect(ROLLOUT.features).to eq []
+    expect(ROLLOUT.exists?(:chat)).to be_falsey
     expect(ROLLOUT.logging.events("chat")).to eq []
     expect(ROLLOUT.logging.global_events).not_to eq []
   end

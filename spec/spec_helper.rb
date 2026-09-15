@@ -5,11 +5,7 @@ require "rack/test"
 require "pry"
 require "redis"
 
-REDIS = ::Redis.new(
-  host: ENV.fetch("REDIS_HOST", "127.0.0.1"),
-  port: ENV.fetch("REDIS_PORT", "6379"),
-  db: ENV.fetch("REDIS_DB", "7"),
-)
+REDIS = Redis.new
 ROLLOUT = Rollout.new(
   adapter: Rollout::Adapters::Redis.new(REDIS),
   logging: { history_length: 100, global: true },
@@ -29,9 +25,5 @@ RSpec.configure do |config|
 
   config.expect_with :rspec do |c|
     c.syntax = :expect
-  end
-
-  config.before do
-    REDIS.flushdb
   end
 end
