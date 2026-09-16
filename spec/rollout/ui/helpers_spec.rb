@@ -18,4 +18,13 @@ RSpec.describe Rollout::UI::Helpers do
     expect(html).to include(%(title="#{time.strftime("%Y-%m-%d %H:%M %Z")}"))
     expect(html).to include(helpers.time_ago(time))
   end
+
+  it "uses the configured timestamp_format in the fallback title" do
+    time = Time.utc(2026, 9, 10, 9, 7, 0)
+    allow(helpers).to receive(:config).and_return(double(get: "%d/%m/%Y %H:%M %Z"))
+
+    html = helpers.relative_timestamp_tag(time)
+
+    expect(html).to include(%(title="#{time.strftime("%d/%m/%Y %H:%M %Z")}"))
+  end
 end

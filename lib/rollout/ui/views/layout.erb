@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html data-timestamp-format="<%= h(config.get(:timestamp_format)) %>">
   <head>
     <title>Rollout UI</title>
     <meta name="viewport" content="width=device-width initial-scale=1">
@@ -53,7 +53,6 @@
           function applyThemeLabel(t) {
             btn.textContent = themeLabels[t];
             btn.title = themeTitles[t];
-            btn.setAttribute('aria-label', themeTitles[t]);
           }
           applyThemeLabel(theme);
           btn.addEventListener('click', function() {
@@ -75,30 +74,42 @@
           function formatTimestamp(iso, mode) {
             const date = new Date(iso);
             if (Number.isNaN(date.getTime())) return null;
-            const parts = new Intl.DateTimeFormat('en-GB', {
+            const format = document.documentElement.getAttribute('data-timestamp-format') || '%Y-%m-%d %H:%M %Z';
+            const parts = {};
+            new Intl.DateTimeFormat('en-US', {
               year: 'numeric',
               month: '2-digit',
               day: '2-digit',
               hour: '2-digit',
               minute: '2-digit',
-              hour12: false,
+              second: '2-digit',
+              hourCycle: 'h23',
               timeZone: mode === 'utc' ? 'UTC' : undefined,
               timeZoneName: 'short'
-            }).formatToParts(date);
-            const value = function(type) {
-              const part = parts.find(function(item) { return item.type === type; });
-              return part ? part.value : '';
+            }).formatToParts(date).forEach(function(part) {
+              if (part.type !== 'literal') parts[part.type] = part.value;
+            });
+            const tokens = {
+              '%Y': parts.year,
+              '%y': parts.year.slice(-2),
+              '%m': parts.month,
+              '%d': parts.day,
+              '%H': parts.hour,
+              '%M': parts.minute,
+              '%S': parts.second,
+              '%Z': parts.timeZoneName,
+              '%%': '%'
             };
-            return value('year') + '-' + value('month') + '-' + value('day') + ' ' + value('hour') + ':' + value('minute') + ' ' + value('timeZoneName');
+            return format.replace(/%[%YymdHMSZ]/g, function(token) {
+              return Object.prototype.hasOwnProperty.call(tokens, token) ? tokens[token] : token;
+            });
           }
           function applyTimezone(mode) {
             const localZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Local';
-            const title = mode === 'utc'
+            timezoneBtn.textContent = mode === 'utc' ? 'Time: UTC' : 'Time: Local';
+            timezoneBtn.title = mode === 'utc'
               ? 'Uses Coordinated Universal Time.'
               : "Uses your browser's timezone: " + localZone;
-            timezoneBtn.textContent = mode === 'utc' ? 'Time: UTC' : 'Time: Local';
-            timezoneBtn.title = title;
-            timezoneBtn.setAttribute('aria-label', title);
             document.querySelectorAll('[data-timestamp]').forEach(function(el) {
               const formatted = formatTimestamp(el.getAttribute('data-timestamp'), mode);
               if (formatted) el.setAttribute('title', formatted);
