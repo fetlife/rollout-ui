@@ -289,4 +289,22 @@ RSpec.describe 'Web UI' do
 
     ROLLOUT.delete(:fake_test_feature_for_rollout_ui_webspec)
   end
+
+  it "exposes timestamps as ISO-8601 data attributes and a timezone toggle" do
+    ROLLOUT.activate(:tz_feature_for_rollout_ui_webspec)
+
+    get '/'
+
+    expect(last_response).to be_ok
+    expect(last_response.body).to include('id="timezone-toggle"', 'Time: Local', 'Theme: System')
+    expect(last_response.body).to match(/data-timestamp="\d{4}-\d{2}-\d{2}T[^"]+"/)
+
+    get '/features/tz_feature_for_rollout_ui_webspec'
+
+    expect(last_response).to be_ok
+    expect(last_response.body).to include('id="timezone-toggle"', 'Time: Local', 'Theme: System')
+    expect(last_response.body).to match(/data-timestamp="\d{4}-\d{2}-\d{2}T[^"]+"/)
+  ensure
+    ROLLOUT.delete(:tz_feature_for_rollout_ui_webspec)
+  end
 end
