@@ -49,7 +49,7 @@
               <% if updated_at.nil? %>
                 <span class="text-gray-400">Never</span>
               <% else %>
-                <span title="<%= h(updated_at.strftime(Rollout::UI.config.timestamp_format)) %>"><%= h(time_ago(updated_at)) %></span>
+                <%= relative_timestamp_tag(updated_at) %>
               <% end %>
             </td>
           <% end %>

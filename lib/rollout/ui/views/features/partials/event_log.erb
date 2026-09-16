@@ -55,7 +55,7 @@
             </td>
 
             <td class="py-2 text-right whitespace-nowrap pl-3" style="min-width: 160px;">
-              <span title="<%= h(event.created_at.strftime(Rollout::UI.config.timestamp_format)) %>"><%= h(time_ago(event.created_at)) %></span>
+              <%= relative_timestamp_tag(event.created_at) %>
             </td>
           </tr>
         <% end %>
