@@ -362,16 +362,19 @@ RSpec.describe 'Web UI' do
     original_actor_block = Rollout::UI.config.instance_variable_get(:@blocks)[:actor]
     Rollout::UI.configure { actor { env['HTTP_USER_AGENT'] } }
 
-    header 'User-Agent', 'test-agent'
-    expect do
-      post '/features/actor_env_test_feature/activate-percentage',
-           { percentage: '50' },
-           'SERVER_PROTOCOL' => 'HTTP/1.1'
-    end.not_to raise_error
-    expect(last_response.status).to eq(303)
+    begin
+      header 'User-Agent', 'test-agent'
+      expect do
+        post '/features/actor_env_test_feature/activate-percentage',
+             { percentage: '50' },
+             'SERVER_PROTOCOL' => 'HTTP/1.1'
+      end.not_to raise_error
+      expect(last_response.status).to eq(303)
 
-    ROLLOUT.delete(:actor_env_test_feature)
-    Rollout::UI.config.instance_variable_get(:@blocks)[:actor] = original_actor_block
+      ROLLOUT.delete(:actor_env_test_feature)
+    ensure
+      Rollout::UI.config.instance_variable_get(:@blocks)[:actor] = original_actor_block
+    end
   end
 
   it "exposes timestamps as ISO-8601 data attributes and a timezone toggle" do
