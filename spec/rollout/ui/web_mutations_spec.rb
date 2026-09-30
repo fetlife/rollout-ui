@@ -91,11 +91,7 @@ RSpec.describe "Web UI mutations" do
     expect(ROLLOUT.logging.events("chat").count).to eq events_before
   end
 
-  it "deletes a feature and records who deleted it" do
-    Rollout::UI.configure do
-      instance { ROLLOUT }
-      actor { '<alice & "co">' }
-    end
+  it "deletes a feature and its history when logging is enabled" do
     ROLLOUT.activate(:chat)
 
     post "/features/chat/delete"
@@ -103,6 +99,17 @@ RSpec.describe "Web UI mutations" do
     expect(last_response).to be_redirect
     expect(ROLLOUT.exists?(:chat)).to be_falsey
     expect(ROLLOUT.logging.events("chat")).to eq []
+  end
+
+  it "renders a deletion event with its escaped actor" do
+    event = Rollout::Logging::Event.new(
+      feature: "chat",
+      name: :delete,
+      data: {},
+      context: { actor: '<alice & "co">' },
+      created_at: Time.now,
+    )
+    ROLLOUT.adapter.record_event(event, history_length: 100, global: true)
 
     get "/"
 
