@@ -92,6 +92,11 @@ RSpec.describe "Web UI mutations" do
   end
 
   it "deletes a feature and its history when logging is enabled" do
+    Rollout::UI.configure do
+      instance { ROLLOUT }
+      actor { "alice" }
+    end
+    expect(ROLLOUT.logging).to receive(:with_context).with({ actor: "alice" }).and_call_original
     ROLLOUT.activate(:chat)
     post "/features/chat/delete"
 
@@ -99,6 +104,19 @@ RSpec.describe "Web UI mutations" do
     expect(ROLLOUT.exists?(:chat)).to be_falsey
     expect(ROLLOUT.logging.events("chat")).to eq []
     expect(ROLLOUT.logging.global_events).not_to eq []
+
+    if ROLLOUT.adapter.respond_to?(:delete_feature_with_history)
+      event = ROLLOUT.logging.global_events.last
+      expect(event.name).to eq "delete"
+      expect(event.feature).to eq "chat"
+      expect(event.context[:actor]).to eq "alice"
+
+      get "/"
+
+      expect(last_response.body).to include("alice", "deleted this feature")
+      expect(last_response.body).to match(%r{<td\b[^>]*>\s*chat\s*</td>})
+      expect(last_response.body).not_to include('href="/features/chat"')
+    end
   end
 
   it "keeps existing history when deleting without logging" do

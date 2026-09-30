@@ -83,8 +83,12 @@ module Rollout::UI
     end
 
     post '/features/:feature_name/delete' do
-      @rollout = config.get(:instance)
-      @rollout.delete(params[:feature_name])
+      rollout = config.get(:instance)
+      actor = config.get(:actor, scope: self)
+
+      with_rollout_context(rollout, actor: actor) do
+        rollout.delete(params[:feature_name])
+      end
 
       redirect index_path
     end
