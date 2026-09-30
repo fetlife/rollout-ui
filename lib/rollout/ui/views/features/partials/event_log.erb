@@ -32,27 +32,7 @@
             <% end %>
             <td class="py-2 pr-3 break-words w-full">
               <% if ["update", "delete"].include?(event.name.to_s) %>
-                <% if event.context && event.context[:actor] %>
-                  <% if config.defined?(:actor_url) %>
-                    <a class="underline" href="<%= h(config.get(:actor_url, event.context[:actor])) %>" target="_blank"><%= h(event.context[:actor]) %></a>
-                  <% else %>
-                    <%= h(event.context[:actor]) %>
-                  <% end %>
-                <% else %>
-                  unidentified user
-                <% end %>
-                <% if event.name.to_s == "delete" %>
-                  deleted this feature
-                <% else %>
-                  <%
-                    changes = event.data.fetch(:before).keys.reject { |key| key.to_s == 'data.updated_at' }.map do |key|
-                      before = format_change_value(event.data.fetch(:before).fetch(key))
-                      after = format_change_value(event.data.fetch(:after).fetch(key))
-                      "#{format_change_key(key)} from #{before} to #{after}"
-                    end
-                  %>
-                  changed <%= h(changes.empty? ? 'nothing!' : changes.join(', ')) %>
-                <% end %>
+                <%= event_actor(event) %> <%= h(event_summary(event)) %>
               <% else %>
                 <%= h(event.data) %>
               <% end %>

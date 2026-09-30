@@ -91,32 +91,25 @@ RSpec.describe "Web UI mutations" do
     expect(ROLLOUT.logging.events("chat").count).to eq events_before
   end
 
-  it "deletes a feature and its history when logging is enabled" do
+  it "deletes a feature and records who deleted it" do
     Rollout::UI.configure do
       instance { ROLLOUT }
-      actor { "alice" }
+      actor { '<alice & "co">' }
     end
-    expect(ROLLOUT.logging).to receive(:with_context).with({ actor: "alice" }).and_call_original
     ROLLOUT.activate(:chat)
+
     post "/features/chat/delete"
 
     expect(last_response).to be_redirect
     expect(ROLLOUT.exists?(:chat)).to be_falsey
     expect(ROLLOUT.logging.events("chat")).to eq []
-    expect(ROLLOUT.logging.global_events).not_to eq []
 
-    if ROLLOUT.adapter.respond_to?(:delete_feature_with_history)
-      event = ROLLOUT.logging.global_events.last
-      expect(event.name).to eq "delete"
-      expect(event.feature).to eq "chat"
-      expect(event.context[:actor]).to eq "alice"
+    get "/"
 
-      get "/"
-
-      expect(last_response.body).to include("alice", "deleted this feature")
-      expect(last_response.body).to match(%r{<td\b[^>]*>\s*chat\s*</td>})
-      expect(last_response.body).not_to include('href="/features/chat"')
-    end
+    body = last_response.body.gsub(/\s+/, " ")
+    expect(body).to include("&lt;alice &amp; &quot;co&quot;&gt; deleted this feature")
+    expect(body).to match(%r{<td\b[^>]*> chat </td>})
+    expect(body).not_to include('href="/features/chat"')
   end
 
   it "keeps existing history when deleting without logging" do

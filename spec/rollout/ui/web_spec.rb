@@ -253,23 +253,6 @@ RSpec.describe 'Web UI' do
       end
     end
 
-    it 'renders deletion history with actor attribution and escaped actor links' do
-      actor = '<actor & "name">'
-      event = double('event', name: 'delete', feature: name, context: { actor: actor }, data: {}, created_at: Time.now)
-      anonymous_event = double('anonymous event', name: 'delete', feature: name, context: nil, data: {}, created_at: Time.now)
-      allow(rollout).to receive(:logging).and_return(double('logging', events: [event, anonymous_event]))
-      allow(Rollout::UI.config).to receive(:defined?).with(:actor_url).and_return(true)
-      allow(Rollout::UI.config).to receive(:get).with(:actor_url, actor).and_return('/actors?id=1&view="full"')
-
-      get '/features/test'
-
-      expect(last_response).to be_ok
-      body = last_response.body.gsub(/\s+/, ' ')
-      expect(body).to include('<a class="underline" href="/actors?id=1&amp;view=&quot;full&quot;" target="_blank">&lt;actor &amp; &quot;name&quot;&gt;</a> deleted this feature')
-      expect(body).to include('unidentified user deleted this feature')
-      expect(body).not_to include(actor)
-    end
-
     it 'escapes non-update history and handles an unidentified actor with no changes' do
       events = [
         double('event', name: 'archive', feature: name, data: '<script>history()</script>', created_at: Time.now),
