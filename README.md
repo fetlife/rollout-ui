@@ -107,6 +107,11 @@ Rollout::UI.configure do
 end
 ```
 
+When using a Rollout version and adapter that support event-aware deletion,
+deletions appear in the overview history with the configured actor. This
+requires global logging (`global: true`); adapters without event-aware deletion
+retain the previous behavior and do not add a deletion event.
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/fetlife/rollout-ui.

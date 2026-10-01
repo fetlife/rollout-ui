@@ -147,8 +147,12 @@ module Rollout::UI
       end
 
       def delete_feature
-        @rollout = config.get(:instance)
-        @rollout.delete(params[:feature_name])
+        rollout = config.get(:instance)
+        actor = config.get(:actor, scope: self)
+
+        with_rollout_context(rollout, actor: actor) do
+          rollout.delete(params[:feature_name])
+        end
 
         redirect_to index_path
       end

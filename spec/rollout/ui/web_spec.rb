@@ -253,7 +253,7 @@ RSpec.describe 'Web UI' do
 
     it 'escapes non-update history and handles an unidentified actor with no changes' do
       events = [
-        double('event', name: 'delete', feature: name, data: '<script>history()</script>', created_at: Time.now),
+        double('event', name: 'archive', feature: name, data: '<script>history()</script>', created_at: Time.now),
         double('event', name: 'update', feature: name, context: nil,
                data: { before: { 'data.updated_at' => 1 }, after: { 'data.updated_at' => 2 } }, created_at: Time.now)
       ]

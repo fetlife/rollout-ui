@@ -95,6 +95,25 @@ module Rollout::UI
       end
     end
 
+    def event_actor(event)
+      actor = event.context && event.context[:actor]
+      return "unidentified user" unless actor
+      return h(actor) unless config.defined?(:actor_url)
+
+      %(<a class="underline" href="#{h(config.get(:actor_url, actor))}" target="_blank">#{h(actor)}</a>)
+    end
+
+    def event_summary(event)
+      return "deleted this feature" if event.name.to_s == "delete"
+
+      changes = event.data.fetch(:before).keys.reject { |key| key.to_s == 'data.updated_at' }.map do |key|
+        before = format_change_value(event.data.fetch(:before).fetch(key))
+        after = format_change_value(event.data.fetch(:after).fetch(key))
+        "#{format_change_key(key)} from #{before} to #{after}"
+      end
+      "changed #{changes.empty? ? 'nothing!' : changes.join(', ')}"
+    end
+
     def json_request?
       request.env['HTTP_ACCEPT'] == 'application/json'
     end
