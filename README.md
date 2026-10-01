@@ -62,6 +62,13 @@ Rails.application.routes.draw do
 end
 ```
 
+## Host Header Validation
+
+This gem performs no Host header validation of its own. When mounted inside a Rails app (as shown above), requests already pass through Rails' own `config.hosts` checks before reaching this mount point.
+
+If you run this as a standalone app (e.g. via `rackup`), you're responsible for host header validation in the same way you're responsible for authentication, for example with
+[`Rack::Protection::HostAuthorization`](https://github.com/sinatra/sinatra/tree/main/rack-protection#host-authorization-api) in front of it, or a reverse proxy that only forwards trusted hosts.
+
 ## API Endpoints
 
 The index and show routes can also respond with JSON data instead of HTML when the request's `Accept` header is

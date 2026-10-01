@@ -6,9 +6,7 @@ RSpec.describe "Web UI mutations" do
   include Rack::Test::Methods
 
   def app
-    Rollout::UI::Web.tap do |app|
-      app.set :host_authorization, skip: true
-    end
+    Rollout::UI::Web.new
   end
 
   def restore_instance
