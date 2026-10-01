@@ -69,7 +69,7 @@ This gem performs no Host header validation of its own. When mounted inside a Ra
 If you run this as a standalone app (e.g. via `rackup`), you're responsible for host header validation in the same way you're responsible for authentication, for example with
 [`Rack::Protection::HostAuthorization`](https://github.com/sinatra/sinatra/tree/main/rack-protection#host-authorization-api) in front of it, or a reverse proxy that only forwards trusted hosts.
 
-## API Endpoints
+## Browser JSON routes
 
 The index and show routes can also respond with JSON data instead of HTML when the request's `Accept` header is
 `application/json`
@@ -77,6 +77,44 @@ The index and show routes can also respond with JSON data instead of HTML when t
 The index route also accepts query parameters to filter by user or group:
 `/admin/rollout?user=someone`
 `/admin/rollout?group=developers`
+
+## Read-only CLI and API v1 (0.10.0, unreleased)
+
+This repository also owns the independently installable [rollout-cli](rollout-cli/README.md)
+gem. Installing it does not install Sinatra, Rails, core Rollout, or adapters.
+The browser JSON routes above retain their existing shape; they are not API v1.
+
+The API is a separate Rack application, loaded and mounted only when the host opts
+in. It requires Rollout 3.1; no core version bump is needed. Configure a fixed
+server environment and wrap the API with **host-owned bearer authentication and
+read authorization** before mounting it:
+
+```ruby
+require "rollout/ui/api"
+
+api = Rollout::UI::API.new(instance: $rollout, environment: Rails.env.to_s)
+# HostRolloutReadAuthorization is a placeholder for your application's middleware.
+authorized_api = HostRolloutReadAuthorization.new(api)
+Rails.application.routes.draw do
+  mount authorized_api => "/internal/rollout/v1"
+end
+```
+
+Do not mount the bare API publicly. The host must issue/validate/revoke credentials,
+authorize access to targeting users and event context, and return JSON 401/403
+instead of browser login redirects. Browser cookies do not authenticate this API.
+The API mounts no browser routes and accepts GET only.
+
+API v1 serves `/features`, `/features/{name}`, `/features/{name}/history`, and
+`/history`. It validates query parameters, limits results to 1–1000 records, caps
+serialized output at 1 MiB, and sends `Cache-Control: no-store`. History retention
+is independently count-bounded per feature and globally. Completeness is always
+unknown; deletion clears feature history and emits no deletion event.
+
+See the [HTTP contract](rollout-cli/HTTP_API.md) for encoding, errors and retention
+semantics, and the [integration checklist](docs/rollout-cli-integration.md) for tests
+and outstanding host changes. Release a new rollout-ui version before upgrading
+the host: published 0.9.2 does not provide this API. Production is unverified.
 
 ## Logging
 

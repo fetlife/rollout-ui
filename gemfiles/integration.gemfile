@@ -1,0 +1,5 @@
+source 'https://rubygems.org'
+gemspec path: '..'
+gem 'rollout-active_record-adapter', '~> 0.1.0'
+gem 'sqlite3', '~> 2.0'
+gem 'rollout-cli', path: '../rollout-cli'
