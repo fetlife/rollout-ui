@@ -62,6 +62,13 @@ Rails.application.routes.draw do
 end
 ```
 
+## Host Header Validation
+
+This gem performs no Host header validation of its own. When mounted inside a Rails app (as shown above), requests already pass through Rails' own `config.hosts` checks before reaching this mount point.
+
+If you run this as a standalone app (e.g. via `rackup`), you're responsible for host header validation in the same way you're responsible for authentication, for example with
+[`Rack::Protection::HostAuthorization`](https://github.com/sinatra/sinatra/tree/main/rack-protection#host-authorization-api) in front of it, or a reverse proxy that only forwards trusted hosts.
+
 ## Browser JSON routes
 
 The index and show routes can also respond with JSON data instead of HTML when the request's `Accept` header is
@@ -137,6 +144,11 @@ Rollout::UI.configure do
   actor_url { |actor| "/#{actor}" }
 end
 ```
+
+When using a Rollout version and adapter that support event-aware deletion,
+deletions appear in the overview history with the configured actor. This
+requires global logging (`global: true`); adapters without event-aware deletion
+retain the previous behavior and do not add a deletion event.
 
 ## Contributing
 

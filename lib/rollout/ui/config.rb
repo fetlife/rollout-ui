@@ -1,4 +1,3 @@
-require "sinatra"
 require "rollout"
 
 require "rollout/ui/version"

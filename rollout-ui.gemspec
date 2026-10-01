@@ -21,8 +21,8 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_dependency 'rollout', '>= 3.1', '< 4'
-  spec.add_dependency 'sinatra', ['>= 2.0', '< 5.0']
-  spec.add_dependency 'sinatra-contrib', ['>= 2.0', '< 5.0']
+  spec.add_dependency 'rack', ['>= 3.1', '< 4.0']
+  spec.add_dependency 'erb'
 
   spec.add_development_dependency 'rollout-redis-adapter', '~> 0.1'
   spec.add_development_dependency 'redis-namespace'
