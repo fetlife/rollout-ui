@@ -9,10 +9,16 @@ module Rollout::UI
       actor
       actor_url
       timestamp_format
+      user_search
+      user_lookup
+      user_search_min_length
+      user_search_limit
     ].freeze
 
     DEFAULT_VALUES = {
-      timestamp_format: '%Y-%m-%d %H:%M %Z'
+      timestamp_format: '%Y-%m-%d %H:%M %Z',
+      user_search_min_length: 3,
+      user_search_limit: 20
     }.freeze
 
     KEYS.each do |key|

@@ -1,0 +1,15 @@
+<div id="user-selector" data-search-url="<%= h(user_search_path) %>" data-min-length="<%= h(user_search_min_length) %>" data-limit="<%= h(user_search_limit) %>" hidden>
+  <div id="selected-users" class="flex flex-wrap mb-2" aria-label="Selected users">
+    <% @selected_users.each do |user| %>
+      <span data-user-id="<%= h(user[:id]) %>" data-nickname="<%= h(user[:nickname]) %>"></span>
+    <% end %>
+  </div>
+  <label class="block text-gray-500 mb-2" for="user-nickname">Search by nickname</label>
+  <input id="user-nickname" class="appearance-none border rounded-sm w-full py-2 px-4 text-gray-600 leading-relaxed bg-white hover:border-gray-500" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="user-search-results" aria-describedby="user-search-status" autocomplete="off" spellcheck="false" maxlength="<%= USER_SEARCH_MAX_LENGTH %>" placeholder="Type a nickname…">
+  <div id="user-search-results" class="border rounded-sm bg-white mt-1" role="listbox" aria-label="Matching nicknames" style="max-height: 16rem; overflow-y: auto" hidden></div>
+  <p id="user-search-status" class="text-gray-500 mt-2" role="status" aria-live="polite">Type at least <%= h(user_search_min_length) %> characters to search.</p>
+  <% if @selected_user_lookup_failed %>
+    <p class="text-gray-500 mt-2" role="status">Selected nicknames could not be loaded. Their user IDs are preserved.</p>
+  <% end %>
+</div>
+<script src="<%= h(javascript_path('user-selector')) %>" defer></script>

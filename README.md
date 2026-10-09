@@ -1,13 +1,11 @@
 # Rollout::UI
 
-Minimalist UI for the [rollout](https://github.com/fetlife/rollout) gem that
-you can just mount as a Rack app and it will just work.
+A Rack-mountable UI for the [rollout](https://github.com/fetlife/rollout) gem.
 
 ![Index Page](./screenshot_index.png)
 <!-- ![Feature Page](./screenshot_show.png) -->
 
 ## Usage with Rails
-
 
 Add it to your application's Gemfile:
 
@@ -17,20 +15,20 @@ gem "rollout-redis-adapter", "~> 0.1"
 gem "rollout-ui"
 ```
 
-`rollout-ui` 0.9+ requires Rollout 3.1 and does not support Rollout 2.x. The UI is backend-neutral: applications using Redis should add `rollout-redis-adapter` and pass a configured Rollout instance into the UI.
+`rollout-ui` 0.9+ requires Rollout 3.1 or later within 3.x. It works with any
+Rollout adapter; Redis applications also need `rollout-redis-adapter`.
 
-Mount it
+Mount the Rack app:
 
 ```ruby
 Rails.application.routes.draw do
-  mount Rollout::UI::Web.new => '/admin/rollout'
+  mount Rollout::UI::Web.new => "/admin/rollout"
 
   # ...
 end
 ```
 
-And to configure it with your `Rollout` instance, you can put your configuration
-in `routes.rb` or in a standalone initializer.
+Configure your Rollout instance in `routes.rb` or an initializer:
 
 ```ruby
 Rollout::UI.configure do
@@ -40,12 +38,10 @@ end
 
 ## Authentication
 
-If you are using Rails, you can put `constraints` on your mount.
-
-So in case of usafe with Devise, your constraints might look like:
+Protect the Rails mount with a constraint. For example, with Devise:
 
 ```ruby
-module Constraint::Admin
+class AdminConstraint
   def self.matches?(request)
     id = request.session["warden.user.user.key"].try(:[], 0).try(:[], 0)
     return false if id.blank?
@@ -56,32 +52,68 @@ module Constraint::Admin
 end
 
 Rails.application.routes.draw do
-  mount Rollout::UI::Web.new => '/admin/rollout', constraints: Constraints::Admin
+  mount Rollout::UI::Web.new => "/admin/rollout", constraints: AdminConstraint
 
   # ...
 end
 ```
 
-## Host Header Validation
+## Nickname user selector
 
-This gem performs no Host header validation of its own. When mounted inside a Rails app (as shown above), requests already pass through Rails' own `config.hosts` checks before reaching this mount point.
+Configure **both** callbacks below to replace the user ID field with a searchable
+multi-select. Your application supplies the queries; the UI displays nicknames
+and Rollout stores user IDs. This example uses Rails and PostgreSQL:
 
-If you run this as a standalone app (e.g. via `rackup`), you're responsible for host header validation in the same way you're responsible for authentication, for example with
-[`Rack::Protection::HostAuthorization`](https://github.com/sinatra/sinatra/tree/main/rack-protection#host-authorization-api) in front of it, or a reverse proxy that only forwards trusted hosts.
+```ruby
+Rollout::UI.configure do
+  instance { $rollout }
 
-## API Endpoints
+  user_search do |query, limit|
+    prefix = User.sanitize_sql_like(query.downcase) + "%"
+    User.where("lower(nickname) LIKE ?", prefix)
+      .limit(limit)
+      .pluck(:id, :nickname)
+      .map { |id, nickname| { id: id.to_s, nickname: nickname } }
+  end
 
-The index and show routes can also respond with JSON data instead of HTML when the request's `Accept` header is
-`application/json`
+  user_lookup do |ids|
+    User.where(id: ids)
+      .pluck(:id, :nickname)
+      .map { |id, nickname| { id: id.to_s, nickname: nickname } }
+  end
+end
+```
 
-The index route also accepts query parameters to filter by user or group:
-`/admin/rollout?user=someone`
-`/admin/rollout?group=developers`
+Both callbacks return arrays of hashes with `id` and `nickname` keys (symbols or
+strings). `user_search` receives a trimmed nickname query and a result limit.
+`user_lookup` receives a batch of selected or historical user IDs as strings;
+omit missing accounts. Apply your account visibility rules in both callbacks.
+
+Search defaults to **3 characters** and **20 results**, with a 300 ms debounce.
+Override these settings inside the same configuration block:
+
+```ruby
+user_search_min_length { 3 }
+user_search_limit { 20 }
+```
+
+For large directories, use **indexed nickname-only prefix matching** and apply
+the limit in the database. Escape wildcards as above; avoid loading all users or
+running unindexed `%contains%` queries. A matching index for this example is:
+
+```sql
+CREATE INDEX CONCURRENTLY users_nickname_prefix_idx
+  ON users (lower(nickname) text_pattern_ops);
+```
+
+Check the query plan against your schema and collation. The selector supports
+keyboard navigation and preserves selections if a lookup fails. Without
+JavaScript, the ID field remains usable. Features with more than 150 selected
+users show only a count.
 
 ## Logging
 
-To get the most out of **rollout-ui**, we recommend you to turn on logging
-on your rollout instance to see history of changes in the UI.
+Enable logging on your Rollout instance to display change history:
 
 ```ruby
 require "redis"
@@ -95,14 +127,12 @@ $rollout = Rollout.new(
 )
 ```
 
-To also see who updated states of your rollouts, you can configure `actor` and
-`actor_url`. So if you are using Rails with Devise, your configuration might
-look like:
+Configure `actor` and `actor_url` to attribute changes. For example, with Devise:
 
 ```ruby
 Rollout::UI.configure do
   instance { $rollout }
-  actor { current_user&.username }
+  actor { current_user&.nickname }
   actor_url { |actor| "/#{actor}" }
 end
 ```
@@ -111,6 +141,34 @@ When using a Rollout version and adapter that support event-aware deletion,
 deletions appear in the overview history with the configured actor. This
 requires global logging (`global: true`); adapters without event-aware deletion
 retain the previous behavior and do not add a deletion event.
+
+With `user_lookup` configured, feature and overview history display current
+nicknames while audit events retain IDs. History resolves up to 150 additional
+distinct IDs per page; missing accounts, failed lookups, and IDs beyond that limit
+use ID-based labels.
+
+## API Endpoints
+
+Send `Accept: application/json` to the index or feature route for JSON responses.
+The index also accepts filters such as `/admin/rollout?user=123` and
+`/admin/rollout?group=developers`.
+
+When both nickname callbacks are configured, `GET /users/search?q=alice`
+(relative to the mount) returns `{"users":[{"id":"123","nickname":"alice"}]}`.
+It uses the mount's authentication, caps results server-side, and sends
+`Cache-Control: no-store`. Queries below the configured minimum return an empty
+list without calling `user_search`. Queries are limited to 100 characters;
+configured minimum lengths and result limits are bounded to 1–100.
+
+## Host Header Validation
+
+When mounted in Rails, requests pass through Rails' `config.hosts` checks. The gem
+performs no additional Host header validation.
+
+For standalone use (e.g. `rackup`), configure authentication and host validation
+through middleware such as
+[`Rack::Protection::HostAuthorization`](https://github.com/sinatra/sinatra/tree/main/rack-protection#host-authorization-api)
+or a reverse proxy that only forwards trusted hosts.
 
 ## Contributing
 
@@ -141,7 +199,7 @@ bundle exec rerun rackup
 
 And visit [http://localhost:9292/](http://localhost:9292/).
 
-Alternatively, you can also configure which Redis with:
+To use a different Redis connection:
 
 ```sh
 REDIS_HOST=localhost REDIS_PORT=6379 REDIS_DB=10 bundle exec rerun rackup

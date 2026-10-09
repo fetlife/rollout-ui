@@ -14,7 +14,7 @@ module Rollout::UI
     NOT_FOUND = ->(env) { [404, { 'content-type' => 'text/plain', 'x-cascade' => 'pass' }, ['Not Found']] }
 
     def initialize
-      @static = Rack::Static.new(NOT_FOUND, urls: ['/css'], root: PUBLIC_PATH)
+      @static = Rack::Static.new(NOT_FOUND, urls: ['/css', '/js'], root: PUBLIC_PATH)
     end
 
     def call(env)
@@ -32,9 +32,11 @@ module Rollout::UI
 
       VIEWS_PATH = File.expand_path('views', __dir__)
       TEMPLATE_CACHE = {}
+      HISTORY_USER_LOOKUP_LIMIT = 150
 
       ROUTES = [
         [:GET, %r{\A/\z}, :index],
+        [:GET, %r{\A/users/search\z}, :search_users],
         [:GET, %r{\A/features/new\z}, :new_feature],
         [:POST, %r{\A/features/new\z}, :create_feature],
         [:POST, %r{\A/features/(?<feature_name>[^/]+)/activate-percentage\z}, :activate_percentage],
@@ -86,6 +88,8 @@ module Rollout::UI
             end
           )
         else
+          @history_events = @rollout.respond_to?(:logging) ? @rollout.logging.global_events.reverse : []
+          load_history_user_nicknames(@history_events)
           render_view(:'features/index')
         end
       end
@@ -105,8 +109,89 @@ module Rollout::UI
         if json_request?
           json(feature_to_hash(@feature))
         else
+          load_selected_users if user_selector_enabled? && @feature.users.count <= USER_EDIT_LIMIT
+          @history_events = @rollout.respond_to?(:logging) ? @rollout.logging.events(@feature.name).reverse : []
+          load_history_user_nicknames(@history_events)
           render_view(:'features/show')
         end
+      end
+
+      def search_users
+        return not_found unless user_selector_enabled?
+
+        response['cache-control'] = 'no-store'
+        query = params[:q]
+        unless query.nil? || query.is_a?(String)
+          response.status = 400
+          return json(error: 'Nickname must be a string.')
+        end
+        query = query.to_s.strip
+        if query.length > USER_SEARCH_MAX_LENGTH
+          response.status = 400
+          return json(error: "Nickname must be at most #{USER_SEARCH_MAX_LENGTH} characters.")
+        end
+        return json(users: []) if query.length < user_search_min_length
+
+        begin
+          users = config.get(:user_search, query, user_search_limit)
+          json(users: users.take(user_search_limit).map { |user| user_to_hash(user) })
+        rescue StandardError
+          response.status = 503
+          json(error: 'Nickname search is temporarily unavailable. Please try again.')
+        end
+      end
+
+      def load_selected_users
+        ids = @feature.users.map(&:to_s)
+        lookup_user_nicknames(ids)
+        @selected_users = ids.map { |id| { id: id, nickname: user_label(id) } }
+        @selected_user_lookup_failed = @user_lookup_failed
+      end
+
+      def load_history_user_nicknames(events)
+        return unless config.defined?(:user_lookup)
+
+        ids = {}
+        events.each do |event|
+          next unless event.name.to_s == 'update'
+
+          [:before, :after].each do |side|
+            changes = event.data.fetch(side)
+            Array(changes[:users] || changes['users']).each do |id|
+              id = id.to_s
+              next if @user_lookup_attempted&.key?(id)
+
+              ids[id] = true
+              return lookup_user_nicknames(ids.keys) if ids.size >= HISTORY_USER_LOOKUP_LIMIT
+            end
+          end
+        end
+        lookup_user_nicknames(ids.keys)
+      end
+
+      def lookup_user_nicknames(ids)
+        @user_nicknames ||= {}
+        @user_lookup_attempted ||= {}
+        missing_ids = ids.uniq.reject { |id| @user_lookup_attempted.key?(id) }
+        return if missing_ids.empty?
+
+        missing_ids.each { |id| @user_lookup_attempted[id] = true }
+        config.get(:user_lookup, missing_ids).each do |user|
+          user = user_to_hash(user)
+          @user_nicknames[user[:id]] = user[:nickname]
+        end
+      rescue StandardError
+        @user_lookup_failed = true
+      end
+
+      def user_to_hash(user)
+        # Only expose the fields needed by the selector, even if a callback
+        # returns additional application-specific attributes.
+        id = user[:id] || user['id']
+        nickname = user[:nickname] || user['nickname']
+        raise ArgumentError, 'Users must have an id and nickname' if id.nil? || nickname.to_s.empty?
+
+        { id: id.to_s, nickname: nickname.to_s }
       end
 
       def update
@@ -122,7 +207,7 @@ module Rollout::UI
             feature.percentage = params[:percentage].to_f.clamp(0.0, 100.0)
             feature.groups = (params[:groups] || []).reject(&:empty?).map(&:to_sym)
             if params[:users]
-              feature.users = params[:users].split(',').map(&:strip).uniq.sort
+              feature.users = params[:users].split(',').map(&:strip).reject(&:empty?).uniq.sort
             end
             feature.data["description"] = params[:description]
             feature.data["updated_at"] = Time.now.to_i
