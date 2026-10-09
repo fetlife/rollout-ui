@@ -234,6 +234,7 @@ RSpec.describe 'Web UI' do
                      created_at: Time.now)
       logging = double('logging', global_events: [event], events: [event], updated_at: Time.now)
       allow(rollout).to receive(:logging).and_return(logging)
+      allow(Rollout::UI.config).to receive(:defined?).and_call_original
       allow(Rollout::UI.config).to receive(:defined?).with(:actor_url).and_return(true)
       allow(Rollout::UI.config).to receive(:get).with(:actor_url, actor).and_return('/actors?id=1&view="full"')
 

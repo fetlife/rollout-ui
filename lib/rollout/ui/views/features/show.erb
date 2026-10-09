@@ -30,11 +30,14 @@
     </div>
 
     <div class="mb-5">
-      <label class="block text-gray-500 mb-2">Users</label>
-      <% if @feature.users.count > 150 %>
+      <label class="block text-gray-500 mb-2" for="users">Users</label>
+      <% if @feature.users.count > USER_EDIT_LIMIT %>
         <div class="appearance-none border rounded-sm w-full py-2 px-4 text-gray-600 leading-relaxed bg-gray-100"><%= h(@feature.users.count) %></div>
       <% else %>
-        <textarea class="appearance-none border rounded-sm w-full py-2 px-4 text-gray-600 leading-relaxed bg-white hover:border-gray-500" name="users" id="users" value="<%= h(@feature.users.join(', ')) %>" rows="2"><%= h(@feature.users.join(', ')) %></textarea>
+        <textarea class="appearance-none border rounded-sm w-full py-2 px-4 text-gray-600 leading-relaxed bg-white hover:border-gray-500" name="users" id="users" rows="2"><%= h(@feature.users.join(', ')) %></textarea>
+        <% if user_selector_enabled? %>
+          <%= erb :"features/partials/user_selector", layout: false %>
+        <% end %>
       <% end %>
     </div>
   </form>
@@ -47,6 +50,4 @@
   </div>
 </main>
 
-<% history_events = @rollout.respond_to?(:logging) ? @rollout.logging.events(@feature.name).reverse : [] %>
-
-<%= erb :"features/partials/event_log", layout: false, locals: { events: history_events } %>
+<%= erb :"features/partials/event_log", layout: false, locals: { events: @history_events } %>

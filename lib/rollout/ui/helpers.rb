@@ -5,8 +5,38 @@ require "rollout/ui/version"
 
 module Rollout::UI
   module Helpers
+    USER_EDIT_LIMIT = 150
+    USER_SEARCH_MAX_LENGTH = 100
+
     def stylesheet_path(name)
       "#{request.script_name}/css/#{name}.css"
+    end
+
+    def javascript_path(name)
+      "#{request.script_name}/js/#{name}.js"
+    end
+
+    def user_search_path
+      "#{request.script_name}/users/search"
+    end
+
+    def user_selector_enabled?
+      config.defined?(:user_search) && config.defined?(:user_lookup)
+    end
+
+    def user_search_min_length
+      config.get(:user_search_min_length).to_i.clamp(1, USER_SEARCH_MAX_LENGTH)
+    end
+
+    def user_search_limit
+      config.get(:user_search_limit).to_i.clamp(1, 100)
+    end
+
+    def user_label(id)
+      id = id.to_s
+      return @user_nicknames[id] if @user_nicknames&.key?(id)
+
+      @user_lookup_attempted&.key?(id) ? "Unknown user (##{id})" : "User (##{id})"
     end
 
     def index_path
@@ -84,10 +114,15 @@ module Rollout::UI
       key.to_s.gsub('data.', '')
     end
 
-    def format_change_value(value)
+    def format_change_value(value, key: nil)
       case value
       when Array
-        "[#{value.join(', ')}]"
+        values = if key.to_s == 'users' && config.defined?(:user_lookup)
+          value.map { |id| user_label(id) }
+        else
+          value
+        end
+        "[#{values.join(', ')}]"
       when String, nil
         "'#{value}'"
       else
@@ -106,9 +141,16 @@ module Rollout::UI
     def event_summary(event)
       return "deleted this feature" if event.name.to_s == "delete"
 
-      changes = event.data.fetch(:before).keys.reject { |key| key.to_s == 'data.updated_at' }.map do |key|
-        before = format_change_value(event.data.fetch(:before).fetch(key))
-        after = format_change_value(event.data.fetch(:after).fetch(key))
+      changes = event.data.fetch(:before).keys.filter_map do |key|
+        next if key.to_s == 'data.updated_at'
+
+        before_value = event.data.fetch(:before).fetch(key)
+        after_value = event.data.fetch(:after).fetch(key)
+        next if before_value == after_value
+        next if key.to_s == 'data.description' && before_value.to_s == after_value.to_s
+
+        before = format_change_value(before_value, key: key)
+        after = format_change_value(after_value, key: key)
         "#{format_change_key(key)} from #{before} to #{after}"
       end
       "changed #{changes.empty? ? 'nothing!' : changes.join(', ')}"
