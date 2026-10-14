@@ -1,0 +1,67 @@
+<section id="enrolled-users" class="mb-5" aria-labelledby="enrolled-users-heading" data-users-url="<%= h(enrolled_users_path(@feature.name)) %>" data-total="<%= h(@users_total_count) %>" data-page="<%= h(@user_page) %>" data-per-page="<%= h(@users_per_page) %>" data-total-pages="<%= h(@users_total_pages) %>">
+  <input type="hidden" name="user_changes" value="1">
+  <input type="hidden" name="page" id="users-page" value="<%= h(@user_page) %>">
+  <h3 id="enrolled-users-heading" class="text-gray-500 mb-2">Explicitly enrolled users (<span id="enrolled-user-count"><%= h(@users_total_count) %></span>)</h3>
+  <p class="text-gray-500 mb-2">Users enabled through groups or percentage are not listed here.</p>
+  <div class="flex items-center justify-between mb-2">
+    <span id="users-range" class="text-xs text-gray-500">Showing <%= @users_total_count.zero? ? 0 : (@user_page - 1) * @users_per_page + 1 %>–<%= [@user_page * @users_per_page, @users_total_count].min %> of <%= h(@users_total_count) %> enrolled users</span>
+    <label class="text-xs text-gray-500" for="users-per-page">Per page
+      <select id="users-per-page" name="per_page" class="border rounded-sm bg-white py-1 px-2">
+        <% USER_PAGE_SIZES.each do |size| %>
+          <option value="<%= size %>"<% if size == @users_per_page %> selected<% end %>><%= size %></option>
+        <% end %>
+      </select>
+    </label>
+  </div>
+  <table class="w-full text-left" aria-label="Explicitly enrolled users">
+    <thead class="text-xs text-gray-500 bg-gray-200">
+      <tr><th scope="col" class="px-3 py-2 font-normal">Nickname</th><th scope="col" class="px-3 py-2 font-normal">User ID</th><th scope="col" class="px-3 py-2 font-normal text-right">Action</th></tr>
+    </thead>
+    <tbody id="enrolled-users-rows">
+      <% if @selected_users.empty? %>
+        <tr><td colspan="3" class="px-3 py-3 text-gray-500">No explicitly enrolled users.</td></tr>
+      <% end %>
+      <% @selected_users.each do |user| %>
+        <tr class="border-b border-gray-200" data-user-id="<%= h(user[:id]) %>" data-nickname="<%= h(user[:nickname]) %>">
+          <td class="px-3 py-2 break-all"><%= h(user[:nickname]) %></td>
+          <td class="px-3 py-2 text-xs text-gray-500">#<%= h(user[:id]) %></td>
+          <td class="px-3 py-2 text-right">
+            <label class="text-xs text-gray-600"><input type="checkbox" name="users_to_remove[]" value="<%= h(user[:id]) %>" aria-label="Remove <%= h(user[:nickname]) %>"> Remove</label>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <nav class="flex items-center justify-between mt-3 text-xs" aria-label="Enrolled user pages">
+    <span id="users-page-number" class="text-gray-500">Page <%= h(@user_page) %> of <%= h(@users_total_pages) %></span>
+    <div class="flex items-center">
+      <a id="users-previous" class="border rounded-sm py-2 px-3 text-gray-600 mr-2" href="<%= h("#{feature_path(@feature.name)}?#{Rack::Utils.build_query(page: [@user_page - 1, 1].max, per_page: @users_per_page)}") %>" data-page="<%= [@user_page - 1, 1].max %>" aria-disabled="<%= @user_page == 1 %>">&larr; Previous</a>
+      <a id="users-next" class="border rounded-sm py-2 px-3 text-gray-600" href="<%= h("#{feature_path(@feature.name)}?#{Rack::Utils.build_query(page: [@user_page + 1, @users_total_pages].min, per_page: @users_per_page)}") %>" data-page="<%= [@user_page + 1, @users_total_pages].min %>" aria-disabled="<%= @user_page == @users_total_pages %>">Next &rarr;</a>
+    </div>
+  </nav>
+  <p id="enrollment-status" class="text-gray-500 mt-2" role="status" aria-live="polite"></p>
+  <% if @selected_user_lookup_failed %>
+    <p class="text-gray-500 mt-2" role="status">Selected nicknames could not be loaded. Their user IDs are preserved.</p>
+  <% end %>
+  <div id="user-id-addition" class="mt-5">
+    <label class="block text-gray-500 mb-2" for="users-to-add">Add user IDs</label>
+    <input id="users-to-add" name="users_to_add" class="appearance-none border rounded-sm w-full py-2 px-4 text-gray-600 bg-white" placeholder="Comma-separated user IDs" autocomplete="off">
+  </div>
+  <% if user_selector_enabled? %>
+    <div id="user-selector" class="mt-5" data-search-url="<%= h(feature_user_search_path(@feature.name)) %>" data-min-length="<%= h(user_search_min_length) %>" data-limit="<%= h(user_search_limit) %>" hidden>
+      <label class="block text-gray-500 mb-2" for="user-nickname">Add someone by nickname</label>
+      <input id="user-nickname" class="appearance-none border rounded-sm w-full py-2 px-4 text-gray-600 bg-white" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="user-search-results" aria-describedby="user-search-status" autocomplete="off" spellcheck="false" maxlength="<%= USER_SEARCH_MAX_LENGTH %>" placeholder="Type a nickname…">
+      <div id="user-search-results" class="border rounded-sm bg-white mt-1" role="listbox" aria-label="Matching nicknames" style="max-height: 16rem; overflow-y: auto" hidden></div>
+      <p id="user-search-status" class="text-gray-500 mt-2" role="status" aria-live="polite">Type at least <%= h(user_search_min_length) %> characters to search. Already-enrolled users are identified across all pages.</p>
+    </div>
+  <% end %>
+  <div id="user-change-inputs" hidden></div>
+  <div id="pending-user-changes" class="border rounded-sm bg-gray-200 p-3 mt-4" hidden>
+    <p id="pending-user-summary" class="text-gray-600" role="status" aria-live="polite"></p>
+    <ul id="pending-user-details" class="text-xs text-gray-600 mt-2"></ul>
+    <button id="discard-user-changes" type="button" class="text-xs text-gray-600 hover:underline mt-2">Discard user changes</button>
+  </div>
+  <p class="text-xs text-gray-500 mt-4">Changes are saved only when you press Update. With JavaScript, switching pages keeps all your pending changes.</p>
+  <noscript><p class="text-xs text-gray-500 mt-2">Update changes before switching pages. Add users by ID and check Remove for users on the current page.</p></noscript>
+</section>
+<script src="<%= h(javascript_path('enrolled-users')) %>" defer></script>

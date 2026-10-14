@@ -61,8 +61,9 @@ end
 ## Nickname user selector
 
 Configure **both** callbacks below to replace the user ID field with a searchable
-multi-select. Your application supplies the queries; the UI displays nicknames
-and Rollout stores user IDs. This example uses Rails and PostgreSQL:
+nickname picker alongside the enrolled-user list. Your application supplies the
+queries; the UI displays nicknames and Rollout stores user IDs. This example
+uses Rails and PostgreSQL:
 
 ```ruby
 Rollout::UI.configure do
@@ -107,11 +108,36 @@ CREATE INDEX CONCURRENTLY users_nickname_prefix_idx
 ```
 
 Check the query plan against your schema and collation. The selector supports
-keyboard navigation and preserves selections if a lookup fails. Without
-JavaScript, the ID field remains usable. Features with more than 150 selected
-users show only a count and explain the limit; editing other settings preserves
-their enrolled IDs. The enrolled count includes unresolved accounts, shown as
-`Unknown user (#ID)`, but excludes users enabled through groups or percentage.
+keyboard navigation and preserves pending changes if a lookup fails. The
+enrolled count includes unresolved accounts, shown as `Unknown user (#ID)`, but
+excludes users enabled through groups or percentage.
+
+### Paginated enrollment editing
+
+Every feature shows a paginated enrollment list, with **25 users per page** by
+default and choices of 10, 25, or 50. Rows are ordered by user ID. Nicknames are
+looked up only for the visible page, independently of the bounded history lookup.
+There is no longer a 150-user enrollment editing cutoff.
+
+Remove/Undo and nickname additions are staged until **Update**. With JavaScript,
+switching enrollment pages leaves pending changes and unsaved description,
+groups, and percentage fields intact. A pending-changes panel lists additions
+and removals across all pages. Search marks already-enrolled users even when
+they are on another page. The heading counts stored enrollments; pending changes
+are reported separately until saved.
+
+The form submits additions and removals, not a replacement list from the visible
+page. Delta requests use `user_changes=1` and require a full-state
+`feature_version`; malformed markers and missing versions are rejected. After
+version validation, these deltas are applied to the full membership
+inside `with_feature`. Duplicate additions are idempotent; removals take
+precedence if an ID appears in both sets. Legacy full-list `users` submissions
+remain supported.
+
+Without JavaScript or nickname callbacks, add users using comma-separated IDs
+and check Remove for visible rows. **Update before following page links** to
+avoid discarding unsaved form changes. Enrollment pagination remains available
+when nickname lookup fails; unknown IDs are never silently dropped.
 
 ## Concurrent edits
 
@@ -123,8 +149,8 @@ in the same second and changes made outside the UI are detected.
 Updates validate the submitted fingerprint inside `with_feature`, before changing
 state. A stale submission is rejected without saving state or history, and the
 UI redirects to the latest feature so the administrator can review and retry.
-Older forms without `feature_version` retain the `last_updated_at` timestamp
-check; that legacy check cannot distinguish same-second edits.
+Older non-delta forms without `feature_version` retain the `last_updated_at`
+timestamp check; that legacy check cannot distinguish same-second edits.
 
 Atomic conflict detection depends on the adapter's mutation guarantees. The
 ActiveRecord adapter locks existing feature rows during `with_feature`. The
@@ -184,6 +210,18 @@ It uses the mount's authentication, caps results server-side, and sends
 `Cache-Control: no-store`. Queries below the configured minimum return an empty
 list without calling `user_search`. Queries are limited to 100 characters;
 configured minimum lengths and result limits are bounded to 1–100.
+
+`GET /features/:name/users?page=2&per_page=25` returns the visible enrollment
+page, total enrollment count, page metadata, full-state `feature_version`, and
+`lookup_failed`. Page sizes are bounded to 10, 25, or 50 and page numbers are
+clamped to the available range. The response never contains the entire
+membership list and sends `Cache-Control: no-store`.
+
+`GET /features/:name/users/search?q=alice` uses the same nickname callbacks and
+limits, adds an `enrolled` flag to each match based on the full membership, and
+includes `feature_version`. The unscoped `/users/search` response is unchanged.
+Paginated reads never replace the form's original version token; if the rollout
+changes while editing, the administrator must review the newer state.
 
 ## Host Header Validation
 

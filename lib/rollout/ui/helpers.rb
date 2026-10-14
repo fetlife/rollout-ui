@@ -7,7 +7,8 @@ require "rollout/ui/version"
 
 module Rollout::UI
   module Helpers
-    USER_EDIT_LIMIT = 150
+    USER_PAGE_SIZES = [10, 25, 50].freeze
+    USER_PAGE_SIZE = 25
     USER_SEARCH_MAX_LENGTH = 100
 
     def stylesheet_path(name)
@@ -20,6 +21,14 @@ module Rollout::UI
 
     def user_search_path
       "#{request.script_name}/users/search"
+    end
+
+    def enrolled_users_path(feature_name)
+      "#{request.script_name}/features/#{feature_name}/users"
+    end
+
+    def feature_user_search_path(feature_name)
+      "#{request.script_name}/features/#{feature_name}/users/search"
     end
 
     def user_selector_enabled?

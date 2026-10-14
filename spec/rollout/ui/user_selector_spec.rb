@@ -85,7 +85,7 @@ RSpec.describe 'Nickname user selector' do
     expect(last_response.body).not_to include('credentials', 'private query')
   end
 
-  it 'disables the endpoint and retains the ID textarea without both callbacks' do
+  it 'disables nickname search and retains ID-based editing without both callbacks' do
     [nil, :user_search, :user_lookup].each do |callback|
       plain_config = Rollout::UI::Config.new
       plain_config.instance { ROLLOUT }
@@ -95,7 +95,7 @@ RSpec.describe 'Nickname user selector' do
       get '/users/search', q: 'alice'
       expect(last_response.status).to eq(404)
       get "/features/#{feature_name}"
-      expect(last_response.body).to include('<textarea')
+      expect(last_response.body).to include('name="users_to_add"', 'name="user_changes" value="1"')
       expect(last_response.body).not_to include('id="user-selector"')
     end
   end
@@ -113,8 +113,8 @@ RSpec.describe 'Nickname user selector' do
       'Users enabled through groups or percentage are not listed here.')
     expect(last_response.body).to include('data-user-id="123" data-nickname="alice"')
     expect(last_response.body).to include('data-user-id="456" data-nickname="Unknown user (#456)"')
-    expect(last_response.body).to include('data-search-url="/admin/rollout/users/search"',
-      'src="/admin/rollout/js/user-selector.js"', 'data-min-length="3"', 'data-limit="20"')
+    expect(last_response.body).to include('data-search-url="/admin/rollout/features/nickname_selector_spec/users/search"',
+      'src="/admin/rollout/js/enrolled-users.js"', 'data-min-length="3"', 'data-limit="20"')
   end
 
   it 'escapes nickname markup in the initial selections' do
@@ -135,7 +135,7 @@ RSpec.describe 'Nickname user selector' do
 
     expect(last_response).to be_ok
     expect(last_response.body).to include('Unknown user (#123)', 'Their user IDs are preserved.')
-    expect(last_response.body).to include('rows="2">123</textarea>')
+    expect(last_response.body).to include('name="users_to_remove[]" value="123"')
   end
 
   it 'does not look up users for an empty selection or JSON feature responses' do
@@ -148,14 +148,17 @@ RSpec.describe 'Nickname user selector' do
     expect(last_response).to be_ok
   end
 
-  it 'retains the count-only display above 150 selected users and bounds history lookups' do
-    ROLLOUT.with_feature(feature_name) { |feature| feature.users = (1..151).map(&:to_s) }
-    expect(lookup).to receive(:call).once.with((1..150).map(&:to_s)).and_call_original
+  it 'paginates large cohorts and only looks up the visible enrollment page' do
+    ids = (1..151).map(&:to_s)
+    ROLLOUT.with_feature(feature_name) { |feature| feature.users = ids }
+    silent = Rollout.new(adapter: Rollout::Adapters::Redis.new(REDIS))
+    config.instance { silent }
+    expect(lookup).to receive(:call).once.with(ids.sort.first(25)).and_call_original
     get "/features/#{feature_name}"
-    expect(last_response.body).to include('>151</div>')
-    expect(last_response.body).to include('Only the count is shown above 150 explicitly enrolled users.',
-      'Existing enrollments are preserved when updating other settings.')
-    expect(last_response.body).not_to include('id="user-selector"', '<textarea')
+    expect(last_response.body).to include('id="enrolled-user-count">151</span>',
+      'Showing 1–25 of 151 enrolled users', 'Page 1 of 7', 'id="user-selector"', 'name="users_to_add"')
+    expect(last_response.body.scan('data-user-id=').count).to eq(25)
+    expect(last_response.body).not_to include('Only the count is shown', 'name="users"')
   end
 
   it 'serves search and JavaScript under a Rack mount' do
@@ -163,7 +166,7 @@ RSpec.describe 'Nickname user selector' do
     response = mounted.get('/admin/rollout/users/search?q=alice')
     expect(response).to be_ok
     expect(JSON.parse(response.body)['users'].first['nickname']).to eq('alice')
-    response = mounted.get('/admin/rollout/js/user-selector.js')
+    response = mounted.get('/admin/rollout/js/enrolled-users.js')
     expect(response).to be_ok
     expect(response.body).to include('AbortController')
     expect(response.headers['content-type']).to include('javascript')
@@ -195,29 +198,29 @@ RSpec.describe 'Nickname user selector' do
     expect(last_response.body).to include('data-user-id="456" data-nickname="Unknown user (#456)"')
     version = last_response.body[/name="feature_version" value="([^"]+)"/, 1]
 
-    post "/features/#{feature_name}", users: '123, 456, 789', percentage: '25', feature_version: version
+    post "/features/#{feature_name}", user_changes: '1', users_to_add: '789', percentage: '25', feature_version: version
     expect(last_response.location).to eq("/features/#{feature_name}")
     expect(ROLLOUT.get(feature_name).users).to eq(%w[123 456 789])
 
     follow_redirect!
     expect(last_response.body).to include('Unknown user (#456)')
     version = last_response.body[/name="feature_version" value="([^"]+)"/, 1]
-    post "/features/#{feature_name}", users: '456, 789', percentage: '25', feature_version: version
+    post "/features/#{feature_name}", user_changes: '1', users_to_remove: ['123'], percentage: '25', feature_version: version
 
     expect(last_response.location).to eq("/features/#{feature_name}")
     expect(ROLLOUT.get(feature_name).users).to eq(%w[456 789])
   end
 
-  it 'preserves all enrollments above the edit limit when updating other settings' do
+  it 'preserves all enrollments when updating other settings from a single page' do
     ids = (1..151).map(&:to_s)
     ROLLOUT.with_feature(feature_name) { |feature| feature.users = ids }
     get "/features/#{feature_name}"
     version = last_response.body[/name="feature_version" value="([^"]+)"/, 1]
 
-    post "/features/#{feature_name}", percentage: '25', description: 'Updated', feature_version: version
+    post "/features/#{feature_name}", user_changes: '1', percentage: '25', description: 'Updated', feature_version: version
 
     expect(last_response.location).to eq("/features/#{feature_name}")
-    expect(ROLLOUT.get(feature_name).users).to eq(ids)
+    expect(ROLLOUT.get(feature_name).users).to match_array(ids)
     expect(ROLLOUT.get(feature_name).data['description']).to eq('Updated')
   end
 end
