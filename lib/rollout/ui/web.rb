@@ -213,7 +213,7 @@ module Rollout::UI
       end
 
       def load_selected_users
-        @users_per_page = parse_users_per_page(params[:per_page])
+        @users_per_page = USER_PAGE_SIZE
         all_ids = @feature.users.map { |id| id.to_s }.uniq.sort
         @users_total_count = all_ids.size
         @users_total_pages = [ (all_ids.size.to_f / @users_per_page).ceil, 1 ].max
@@ -225,14 +225,6 @@ module Rollout::UI
         end
         @selected_users = page_ids.map { |id| { id: id, nickname: user_label(id) } }
         @selected_user_lookup_failed = @user_lookup_failed == true
-      end
-
-      def parse_users_per_page(value)
-        return USER_PAGE_SIZE if value.is_a?(Array) || value.is_a?(Hash)
-        raw = value.to_s.strip
-        return USER_PAGE_SIZE unless raw.match?(/\A\d+\z/)
-        candidate = raw.to_i
-        USER_PAGE_SIZES.include?(candidate) ? candidate : USER_PAGE_SIZE
       end
 
       def parse_users_page(value, total_pages)
@@ -312,12 +304,11 @@ module Rollout::UI
         end
 
         redirect_location = feature_path(params[:feature_name])
-        if params.key?(:page) || params.key?(:per_page)
-          per_page = parse_users_per_page(params[:per_page])
+        if params.key?(:page)
           after_feature = config.get(:instance).get(params[:feature_name])
-          total_pages = [ (after_feature.users.map(&:to_s).uniq.size.to_f / per_page).ceil, 1 ].max
+          total_pages = [ (after_feature.users.map(&:to_s).uniq.size.to_f / USER_PAGE_SIZE).ceil, 1 ].max
           page = parse_users_page(params[:page], total_pages)
-          redirect_location = "#{feature_path(params[:feature_name])}?#{Rack::Utils.build_query('page' => page, 'per_page' => per_page)}"
+          redirect_location = "#{feature_path(params[:feature_name])}?#{Rack::Utils.build_query('page' => page)}"
         end
         redirect_to redirect_location
       rescue StaleFeature => error

@@ -2,15 +2,8 @@
   <input type="hidden" name="user_changes" value="1">
   <input type="hidden" name="page" id="users-page" value="<%= h(@user_page) %>">
   <h3 id="enrolled-users-heading" class="text-gray-500 mb-2">Users (<span id="enrolled-user-count"><%= h(@users_total_count) %></span>)</h3>
-  <div class="flex items-center justify-between mb-2">
+  <div class="mb-2">
     <span id="users-range" class="text-xs text-gray-500">Showing <%= @users_total_count.zero? ? 0 : (@user_page - 1) * @users_per_page + 1 %>–<%= [@user_page * @users_per_page, @users_total_count].min %> of <%= h(@users_total_count) %> enrolled users</span>
-    <label class="text-xs text-gray-500" for="users-per-page">Per page
-      <select id="users-per-page" name="per_page" class="border rounded-sm bg-white py-1 px-2">
-        <% USER_PAGE_SIZES.each do |size| %>
-          <option value="<%= size %>"<% if size == @users_per_page %> selected<% end %>><%= size %></option>
-        <% end %>
-      </select>
-    </label>
   </div>
   <table class="w-full text-left" aria-label="Explicitly enrolled users">
     <thead class="text-xs text-gray-500 bg-gray-200">
@@ -34,8 +27,8 @@
   <nav class="flex items-center justify-between mt-3 text-xs" aria-label="Enrolled user pages">
     <span id="users-page-number" class="text-gray-500">Page <%= h(@user_page) %> of <%= h(@users_total_pages) %></span>
     <div class="flex items-center">
-      <a id="users-previous" class="border rounded-sm py-2 px-3 text-gray-600 mr-2" href="<%= h("#{feature_path(@feature.name)}?#{Rack::Utils.build_query(page: [@user_page - 1, 1].max, per_page: @users_per_page)}") %>" data-page="<%= [@user_page - 1, 1].max %>" aria-disabled="<%= @user_page == 1 %>">&larr; Previous</a>
-      <a id="users-next" class="border rounded-sm py-2 px-3 text-gray-600" href="<%= h("#{feature_path(@feature.name)}?#{Rack::Utils.build_query(page: [@user_page + 1, @users_total_pages].min, per_page: @users_per_page)}") %>" data-page="<%= [@user_page + 1, @users_total_pages].min %>" aria-disabled="<%= @user_page == @users_total_pages %>">Next &rarr;</a>
+      <a id="users-previous" class="border rounded-sm py-2 px-3 text-gray-600 mr-2" href="<%= h("#{feature_path(@feature.name)}?#{Rack::Utils.build_query(page: [@user_page - 1, 1].max)}") %>" data-page="<%= [@user_page - 1, 1].max %>" aria-disabled="<%= @user_page == 1 %>">&larr; Previous</a>
+      <a id="users-next" class="border rounded-sm py-2 px-3 text-gray-600" href="<%= h("#{feature_path(@feature.name)}?#{Rack::Utils.build_query(page: [@user_page + 1, @users_total_pages].min)}") %>" data-page="<%= [@user_page + 1, @users_total_pages].min %>" aria-disabled="<%= @user_page == @users_total_pages %>">Next &rarr;</a>
     </div>
   </nav>
   <p id="enrollment-status" class="text-gray-500 mt-2" role="status" aria-live="polite"></p>
@@ -60,7 +53,6 @@
     <ul id="pending-user-details" class="text-xs text-gray-600 mt-2"></ul>
     <button id="discard-user-changes" type="button" class="text-xs text-gray-600 hover:underline mt-2">Discard user changes</button>
   </div>
-  <p class="text-xs text-gray-500 mt-4">Changes are saved only when you press Update. With JavaScript, switching pages keeps all your pending changes.</p>
   <noscript><p class="text-xs text-gray-500 mt-2">Update changes before switching pages. Add users by ID and check Remove for users on the current page.</p></noscript>
 </section>
 <script src="<%= h(javascript_path('enrolled-users')) %>" defer></script>

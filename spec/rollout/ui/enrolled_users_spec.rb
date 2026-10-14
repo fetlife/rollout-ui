@@ -67,18 +67,18 @@ RSpec.describe 'Enrolled users pagination' do
   it 'returns paginated enrolled users JSON with no-store and bounded lookups' do
     ROLLOUT.with_feature(feature_name) { |feature| feature.users = (1..26).map(&:to_s) }
 
-    expect(lookup).to receive(:call).once.with((1..26).map(&:to_s).sort.first(10)).and_call_original
+    expect(lookup).to receive(:call).once.with((1..26).map(&:to_s).sort.first(25)).and_call_original
 
     get users_path, page: 1, per_page: 10
     body = JSON.parse(last_response.body)
 
     expect(last_response).to be_ok
     expect(last_response.headers['Cache-Control']).to eq('no-store')
-    expect(body['users'].map { |user| user['id'] }).to eq((1..26).map(&:to_s).sort.first(10))
+    expect(body['users'].map { |user| user['id'] }).to eq((1..26).map(&:to_s).sort.first(25))
     expect(body['total']).to eq(26)
     expect(body['page']).to eq(1)
-    expect(body['per_page']).to eq(10)
-    expect(body['total_pages']).to eq(3)
+    expect(body['per_page']).to eq(25)
+    expect(body['total_pages']).to eq(2)
     expect(body['feature_version']).to match(/\A[0-9a-f]{64}\z/)
     expect(body['lookup_failed']).to be false
   end
@@ -102,11 +102,11 @@ RSpec.describe 'Enrolled users pagination' do
     get users_path, per_page: 50
     body = JSON.parse(last_response.body)
     expect(body['total']).to eq(151)
-    expect(body['total_pages']).to eq(4)
-    expect(body['per_page']).to eq(50)
+    expect(body['total_pages']).to eq(7)
+    expect(body['per_page']).to eq(25)
   end
 
-  it 'parses page and per-page safely' do
+  it 'uses a fixed page size and parses page numbers safely' do
     ROLLOUT.with_feature(feature_name) { |feature| feature.users = (1..26).map(&:to_s) }
 
     get users_path, page: 'abc', per_page: '1000'
@@ -125,7 +125,7 @@ RSpec.describe 'Enrolled users pagination' do
 
     get users_path, page: '999', per_page: '10'
     body = JSON.parse(last_response.body)
-    expect(body['page']).to eq(3)
+    expect(body['page']).to eq(2)
   end
 
   it 'retains unknown IDs and reports lookup failures as ID-based labels' do
@@ -185,7 +185,7 @@ RSpec.describe 'Enrolled users pagination' do
     expect(last_response).to be_redirect
     expect(ROLLOUT.get(feature_name).users).to eq((2..31).map(&:to_s).sort)
     expect(last_response.location).to include('page=1')
-    expect(last_response.location).to include('per_page=25')
+    expect(last_response.location).not_to include('per_page')
   end
 
   it 'preserves all users for empty deltas and is idempotent for duplicates' do
@@ -268,11 +268,11 @@ RSpec.describe 'Enrolled users pagination' do
     get users_path, page: '2', per_page: '10'
     body = JSON.parse(last_response.body)
 
-    expect(body['users'].map { |user| user['id'] }).to eq((1..26).map(&:to_s).sort[10, 10])
+    expect(body['users'].map { |user| user['id'] }).to eq((1..26).map(&:to_s).sort[25, 25])
     expect(body['users'].map { |user| user.keys }.uniq).to eq([%w[id nickname]])
     expect(body['page']).to eq(2)
     expect(body['total']).to eq(26)
-    expect(body['total_pages']).to eq(3)
+    expect(body['total_pages']).to eq(2)
   end
 
   it 'renders the selected enrollment page from the HTML show action' do
@@ -281,8 +281,10 @@ RSpec.describe 'Enrolled users pagination' do
     get path, page: 2, per_page: 10
 
     expect(last_response).to be_ok
-    expect(last_response.body).to include('data-page="2"', 'data-per-page="10"', 'data-total="26"', 'data-total-pages="3"')
-    expect(last_response.body.scan('data-user-id=').count).to eq(10)
+    expect(last_response.body).to include('data-page="2"', 'data-per-page="25"', 'data-total="26"', 'data-total-pages="2"')
+    expect(last_response.body.scan('data-user-id=').count).to eq(1)
+    expect(last_response.body).not_to include('id="users-per-page"', 'name="per_page"',
+      'Changes are saved only when you press Update. With JavaScript, switching pages keeps all your pending changes.')
   end
 
   it 'does not let a feature_name query param change global search or read the feature' do

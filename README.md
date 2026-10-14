@@ -114,8 +114,8 @@ excludes users enabled through groups or percentage.
 
 ### Paginated enrollment editing
 
-Every feature shows a paginated enrollment list, with **25 users per page** by
-default and choices of 10, 25, or 50. Rows are ordered by user ID. Nicknames are
+Every feature shows a paginated enrollment list with **25 users per page**.
+Rows are ordered by user ID. Nicknames are
 looked up only for the visible page, independently of the bounded history lookup.
 There is no longer a 150-user enrollment editing cutoff.
 
@@ -211,10 +211,10 @@ It uses the mount's authentication, caps results server-side, and sends
 list without calling `user_search`. Queries are limited to 100 characters;
 configured minimum lengths and result limits are bounded to 1–100.
 
-`GET /features/:name/users?page=2&per_page=25` returns the visible enrollment
+`GET /features/:name/users?page=2` returns the visible enrollment
 page, total enrollment count, page metadata, full-state `feature_version`, and
-`lookup_failed`. Page sizes are bounded to 10, 25, or 50 and page numbers are
-clamped to the available range. The response never contains the entire
+`lookup_failed`. Pages contain at most 25 users and page numbers are clamped to
+the available range. The response never contains the entire
 membership list and sends `Cache-Control: no-store`.
 
 `GET /features/:name/users/search?q=alice` uses the same nickname callbacks and

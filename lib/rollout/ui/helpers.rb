@@ -7,7 +7,6 @@ require "rollout/ui/version"
 
 module Rollout::UI
   module Helpers
-    USER_PAGE_SIZES = [10, 25, 50].freeze
     USER_PAGE_SIZE = 25
     USER_SEARCH_MAX_LENGTH = 100
 
