@@ -1,8 +1,7 @@
 <section id="enrolled-users" class="mb-5" aria-labelledby="enrolled-users-heading" data-users-url="<%= h(enrolled_users_path(@feature.name)) %>" data-total="<%= h(@users_total_count) %>" data-page="<%= h(@user_page) %>" data-per-page="<%= h(@users_per_page) %>" data-total-pages="<%= h(@users_total_pages) %>">
   <input type="hidden" name="user_changes" value="1">
   <input type="hidden" name="page" id="users-page" value="<%= h(@user_page) %>">
-  <h3 id="enrolled-users-heading" class="text-gray-500 mb-2">Explicitly enrolled users (<span id="enrolled-user-count"><%= h(@users_total_count) %></span>)</h3>
-  <p class="text-gray-500 mb-2">Users enabled through groups or percentage are not listed here.</p>
+  <h3 id="enrolled-users-heading" class="text-gray-500 mb-2">Users (<span id="enrolled-user-count"><%= h(@users_total_count) %></span>)</h3>
   <div class="flex items-center justify-between mb-2">
     <span id="users-range" class="text-xs text-gray-500">Showing <%= @users_total_count.zero? ? 0 : (@user_page - 1) * @users_per_page + 1 %>–<%= [@user_page * @users_per_page, @users_total_count].min %> of <%= h(@users_total_count) %> enrolled users</span>
     <label class="text-xs text-gray-500" for="users-per-page">Per page

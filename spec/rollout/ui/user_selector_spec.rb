@@ -109,8 +109,8 @@ RSpec.describe 'Nickname user selector' do
     get "/features/#{feature_name}", {}, 'SCRIPT_NAME' => '/admin/rollout'
 
     expect(last_response).to be_ok
-    expect(last_response.body).to include('Explicitly enrolled users (<span id="enrolled-user-count">2</span>)',
-      'Users enabled through groups or percentage are not listed here.')
+    expect(last_response.body).to include('Users (<span id="enrolled-user-count">2</span>)')
+    expect(last_response.body).not_to include('Users enabled through groups or percentage are not listed here.')
     expect(last_response.body).to include('data-user-id="123" data-nickname="alice"')
     expect(last_response.body).to include('data-user-id="456" data-nickname="Unknown user (#456)"')
     expect(last_response.body).to include('data-search-url="/admin/rollout/features/nickname_selector_spec/users/search"',
