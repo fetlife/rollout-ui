@@ -1,3 +1,5 @@
+require "digest/sha2"
+require "json"
 require "rack"
 require "rollout"
 
@@ -37,6 +39,17 @@ module Rollout::UI
       return @user_nicknames[id] if @user_nicknames&.key?(id)
 
       @user_lookup_attempted&.key?(id) ? "Unknown user (##{id})" : "User (##{id})"
+    end
+
+    def feature_version(feature)
+      state = [
+        feature.name.to_s,
+        feature.percentage.to_f,
+        feature.groups.map(&:to_s).uniq.sort,
+        feature.users.map(&:to_s).uniq.sort,
+        feature.data["description"].to_s,
+      ]
+      Digest::SHA256.hexdigest(state.to_json)
     end
 
     def index_path

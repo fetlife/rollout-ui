@@ -8,6 +8,7 @@
 <div class="w-8 h-1 bg-gray-300 my-10"></div>
 <main class="p-6 bg-gray-100 max-w-lg w-full text-sm rounded-sm">
   <form id="updateFormSubmit" action="<%= h(feature_path(@feature.name)) %>" method="POST">
+    <input type="hidden" name="feature_version" value="<%= h(feature_version(@feature)) %>">
     <input type="hidden" name="last_updated_at" value="<%= h(@feature.data['updated_at']) %>">
     <div class="mb-5">
       <label class="block text-gray-500 mb-2" for="description">Description</label>
@@ -30,9 +31,11 @@
     </div>
 
     <div class="mb-5">
-      <label class="block text-gray-500 mb-2" for="users">Users</label>
+      <label class="block text-gray-500 mb-2" for="users">Explicitly enrolled users (<span id="enrolled-user-count"><%= h(@feature.users.count) %></span>)</label>
+      <p class="text-gray-500 mb-2">Users enabled through groups or percentage are not listed here.</p>
       <% if @feature.users.count > USER_EDIT_LIMIT %>
         <div class="appearance-none border rounded-sm w-full py-2 px-4 text-gray-600 leading-relaxed bg-gray-100"><%= h(@feature.users.count) %></div>
+        <p class="text-gray-500 mt-2">Only the count is shown above <%= USER_EDIT_LIMIT %> explicitly enrolled users. Existing enrollments are preserved when updating other settings.</p>
       <% else %>
         <textarea class="appearance-none border rounded-sm w-full py-2 px-4 text-gray-600 leading-relaxed bg-white hover:border-gray-500" name="users" id="users" rows="2"><%= h(@feature.users.join(', ')) %></textarea>
         <% if user_selector_enabled? %>

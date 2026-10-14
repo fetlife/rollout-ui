@@ -109,6 +109,8 @@ RSpec.describe 'Nickname user selector' do
     get "/features/#{feature_name}", {}, 'SCRIPT_NAME' => '/admin/rollout'
 
     expect(last_response).to be_ok
+    expect(last_response.body).to include('Explicitly enrolled users (<span id="enrolled-user-count">2</span>)',
+      'Users enabled through groups or percentage are not listed here.')
     expect(last_response.body).to include('data-user-id="123" data-nickname="alice"')
     expect(last_response.body).to include('data-user-id="456" data-nickname="Unknown user (#456)"')
     expect(last_response.body).to include('data-search-url="/admin/rollout/users/search"',
@@ -151,6 +153,8 @@ RSpec.describe 'Nickname user selector' do
     expect(lookup).to receive(:call).once.with((1..150).map(&:to_s)).and_call_original
     get "/features/#{feature_name}"
     expect(last_response.body).to include('>151</div>')
+    expect(last_response.body).to include('Only the count is shown above 150 explicitly enrolled users.',
+      'Existing enrollments are preserved when updating other settings.')
     expect(last_response.body).not_to include('id="user-selector"', '<textarea')
   end
 
@@ -183,5 +187,37 @@ RSpec.describe 'Nickname user selector' do
     post "/features/#{feature_name}", percentage: '25'
     expect(last_response).to be_redirect
     expect(ROLLOUT.get(feature_name).users).to eq(['123'])
+  end
+
+  it 'preserves unresolved accounts when adding and removing users with a rendered form version' do
+    ROLLOUT.with_feature(feature_name) { |feature| feature.users = %w[123 456] }
+    get "/features/#{feature_name}"
+    expect(last_response.body).to include('data-user-id="456" data-nickname="Unknown user (#456)"')
+    version = last_response.body[/name="feature_version" value="([^"]+)"/, 1]
+
+    post "/features/#{feature_name}", users: '123, 456, 789', percentage: '25', feature_version: version
+    expect(last_response.location).to eq("/features/#{feature_name}")
+    expect(ROLLOUT.get(feature_name).users).to eq(%w[123 456 789])
+
+    follow_redirect!
+    expect(last_response.body).to include('Unknown user (#456)')
+    version = last_response.body[/name="feature_version" value="([^"]+)"/, 1]
+    post "/features/#{feature_name}", users: '456, 789', percentage: '25', feature_version: version
+
+    expect(last_response.location).to eq("/features/#{feature_name}")
+    expect(ROLLOUT.get(feature_name).users).to eq(%w[456 789])
+  end
+
+  it 'preserves all enrollments above the edit limit when updating other settings' do
+    ids = (1..151).map(&:to_s)
+    ROLLOUT.with_feature(feature_name) { |feature| feature.users = ids }
+    get "/features/#{feature_name}"
+    version = last_response.body[/name="feature_version" value="([^"]+)"/, 1]
+
+    post "/features/#{feature_name}", percentage: '25', description: 'Updated', feature_version: version
+
+    expect(last_response.location).to eq("/features/#{feature_name}")
+    expect(ROLLOUT.get(feature_name).users).to eq(ids)
+    expect(ROLLOUT.get(feature_name).data['description']).to eq('Updated')
   end
 end

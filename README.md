@@ -109,7 +109,32 @@ CREATE INDEX CONCURRENTLY users_nickname_prefix_idx
 Check the query plan against your schema and collation. The selector supports
 keyboard navigation and preserves selections if a lookup fails. Without
 JavaScript, the ID field remains usable. Features with more than 150 selected
-users show only a count.
+users show only a count and explain the limit; editing other settings preserves
+their enrolled IDs. The enrolled count includes unresolved accounts, shown as
+`Unknown user (#ID)`, but excludes users enabled through groups or percentage.
+
+## Concurrent edits
+
+Feature forms include a `feature_version` fingerprint of the editable state:
+percentage, groups, enrolled IDs, and description. Ordering of IDs and groups,
+timestamps, and unrelated metadata do not change the fingerprint. Distinct edits
+in the same second and changes made outside the UI are detected.
+
+Updates validate the submitted fingerprint inside `with_feature`, before changing
+state. A stale submission is rejected without saving state or history, and the
+UI redirects to the latest feature so the administrator can review and retry.
+Older forms without `feature_version` retain the `last_updated_at` timestamp
+check; that legacy check cannot distinguish same-second edits.
+
+Atomic conflict detection depends on the adapter's mutation guarantees. The
+ActiveRecord adapter locks existing feature rows during `with_feature`. The
+Redis adapter does not provide the equivalent lock or compare-and-set guarantee.
+
+Use uncached feature reads for the Rollout instance supplied to the admin UI.
+Process-local adapter caches can otherwise display an older enrolled list and
+form version after another worker saves. Normal feature evaluation can use a
+separate cached instance with the same group definitions. Feature responses send
+`Cache-Control: no-store`; this does not bypass an adapter's server-side cache.
 
 ## Logging
 
