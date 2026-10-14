@@ -2,9 +2,6 @@
   <input type="hidden" name="user_changes" value="1">
   <input type="hidden" name="page" id="users-page" value="<%= h(@user_page) %>">
   <h3 id="enrolled-users-heading" class="text-gray-500 mb-2">Users (<span id="enrolled-user-count"><%= h(@users_total_count) %></span>)</h3>
-  <div class="mb-2">
-    <span id="users-range" class="text-xs text-gray-500">Showing <%= @users_total_count.zero? ? 0 : (@user_page - 1) * @users_per_page + 1 %>–<%= [@user_page * @users_per_page, @users_total_count].min %> of <%= h(@users_total_count) %> enrolled users</span>
-  </div>
   <table class="w-full text-left" aria-label="Explicitly enrolled users">
     <thead class="text-xs text-gray-500 bg-gray-200">
       <tr><th scope="col" class="px-3 py-2 font-normal">Nickname</th><th scope="col" class="px-3 py-2 font-normal">User ID</th><th scope="col" class="px-3 py-2 font-normal text-right">Action</th></tr>
@@ -44,7 +41,7 @@
       <label class="block text-gray-500 mb-2" for="user-nickname">Add someone by nickname</label>
       <input id="user-nickname" class="appearance-none border rounded-sm w-full py-2 px-4 text-gray-600 bg-white" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="user-search-results" aria-describedby="user-search-status" autocomplete="off" spellcheck="false" maxlength="<%= USER_SEARCH_MAX_LENGTH %>" placeholder="Type a nickname…">
       <div id="user-search-results" class="border rounded-sm bg-white mt-1" role="listbox" aria-label="Matching nicknames" style="max-height: 16rem; overflow-y: auto" hidden></div>
-      <p id="user-search-status" class="text-gray-500 mt-2" role="status" aria-live="polite">Type at least <%= h(user_search_min_length) %> characters to search. Already-enrolled users are identified across all pages.</p>
+      <p id="user-search-status" class="text-gray-500 mt-2" role="status" aria-live="polite"></p>
     </div>
   <% end %>
   <div id="user-change-inputs" hidden></div>

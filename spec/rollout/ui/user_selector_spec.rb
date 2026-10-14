@@ -156,7 +156,8 @@ RSpec.describe 'Nickname user selector' do
     expect(lookup).to receive(:call).once.with(ids.sort.first(25)).and_call_original
     get "/features/#{feature_name}"
     expect(last_response.body).to include('id="enrolled-user-count">151</span>',
-      'Showing 1–25 of 151 enrolled users', 'Page 1 of 7', 'id="user-selector"', 'name="users_to_add"')
+      'Page 1 of 7', 'id="user-selector"', 'name="users_to_add"')
+    expect(last_response.body).not_to include('Showing 1–25 of 151 enrolled users', 'Type at least')
     expect(last_response.body.scan('data-user-id=').count).to eq(25)
     expect(last_response.body).not_to include('Only the count is shown', 'name="users"')
   end

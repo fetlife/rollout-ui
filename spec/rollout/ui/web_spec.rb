@@ -215,7 +215,8 @@ RSpec.describe 'Web UI' do
 
       expect(last_response).to be_ok
       expect(last_response.body).to include('value="" selected>(none)', 'id="enrolled-user-count">151</span>',
-        'Showing 1–25 of 151 enrolled users', 'name="users_to_add"', 'name="users_to_remove[]"')
+        'name="users_to_add"', 'name="users_to_remove[]"')
+      expect(last_response.body).not_to include('Showing 1–25 of 151 enrolled users')
       expect(last_response.body.scan('data-user-id=').count).to eq(25)
       expect(last_response.body).not_to include('name="users"', 'value="other" selected')
     end
