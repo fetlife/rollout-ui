@@ -30,6 +30,9 @@ module Rollout::UI
     class Dispatcher
       include Helpers
 
+      class StaleFeature < StandardError
+      end
+
       VIEWS_PATH = File.expand_path('views', __dir__)
       TEMPLATE_CACHE = {}
       HISTORY_USER_LOOKUP_LIMIT = 150
@@ -103,6 +106,7 @@ module Rollout::UI
       end
 
       def show
+        response['cache-control'] = 'no-store'
         @rollout = config.get(:instance)
         @feature = @rollout.get(params[:feature_name])
 
@@ -197,13 +201,10 @@ module Rollout::UI
       def update
         rollout = config.get(:instance)
         actor = config.get(:actor, scope: self)
-        feature_data = rollout.get(params[:feature_name]).data
-        if feature_data['updated_at'] && params[:last_updated_at].to_s != feature_data['updated_at'].to_s
-          return redirect_to("#{feature_path(params[:feature_name])}?error=Rollout version outdated. Review changes below and try again.")
-        end
 
         with_rollout_context(rollout, actor: actor) do
           rollout.with_feature(params[:feature_name]) do |feature|
+            validate_feature_version!(feature)
             feature.percentage = params[:percentage].to_f.clamp(0.0, 100.0)
             feature.groups = (params[:groups] || []).reject(&:empty?).map(&:to_sym)
             if params[:users]
@@ -215,6 +216,20 @@ module Rollout::UI
         end
 
         redirect_to feature_path(params[:feature_name])
+      rescue StaleFeature => error
+        query = Rack::Utils.build_query(error: error.message)
+        redirect_to("#{feature_path(params[:feature_name])}?#{query}")
+      end
+
+      def validate_feature_version!(feature)
+        stale = if params.key?(:feature_version)
+          params[:feature_version].to_s != feature_version(feature)
+        else
+          feature.data['updated_at'] && params[:last_updated_at].to_s != feature.data['updated_at'].to_s
+        end
+        if stale
+          raise StaleFeature, 'This rollout changed since you opened it. Your update was not saved. Review the latest state and try again.'
+        end
       end
 
       def activate_percentage
