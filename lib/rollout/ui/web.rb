@@ -33,6 +33,11 @@ module Rollout::UI
       class StaleFeature < StandardError
       end
 
+      class InvalidEnrollment < StandardError
+      end
+
+      STALE_FEATURE_MESSAGE = 'This rollout changed since you opened it. Your update was not saved. Review the latest state and try again.'
+
       VIEWS_PATH = File.expand_path('views', __dir__)
       TEMPLATE_CACHE = {}
       HISTORY_USER_LOOKUP_LIMIT = 150
@@ -40,6 +45,8 @@ module Rollout::UI
       ROUTES = [
         [:GET, %r{\A/\z}, :index],
         [:GET, %r{\A/users/search\z}, :search_users],
+        [:GET, %r{\A/features/(?<feature_name>[^/]+)/users/search\z}, :search_feature_users],
+        [:GET, %r{\A/features/(?<feature_name>[^/]+)/users\z}, :enrolled_users],
         [:GET, %r{\A/features/new\z}, :new_feature],
         [:POST, %r{\A/features/new\z}, :create_feature],
         [:POST, %r{\A/features/(?<feature_name>[^/]+)/activate-percentage\z}, :activate_percentage],
@@ -113,7 +120,7 @@ module Rollout::UI
         if json_request?
           json(feature_to_hash(@feature))
         else
-          load_selected_users if user_selector_enabled? && @feature.users.count <= USER_EDIT_LIMIT
+          load_selected_users
           @history_events = @rollout.respond_to?(:logging) ? @rollout.logging.events(@feature.name).reverse : []
           load_history_user_nicknames(@history_events)
           render_view(:'features/show')
@@ -145,11 +152,91 @@ module Rollout::UI
         end
       end
 
+      def search_feature_users
+        return not_found unless user_selector_enabled?
+
+        response['cache-control'] = 'no-store'
+        @rollout = config.get(:instance)
+        begin
+          @feature = @rollout.get(params[:feature_name])
+        rescue StandardError
+          return not_found
+        end
+
+        query = params[:q]
+        unless query.nil? || query.is_a?(String)
+          response.status = 400
+          return json(error: 'Nickname must be a string.')
+        end
+        query = query.to_s.strip
+        if query.length > USER_SEARCH_MAX_LENGTH
+          response.status = 400
+          return json(error: "Nickname must be at most #{USER_SEARCH_MAX_LENGTH} characters.")
+        end
+        return json(users: [], feature_version: feature_version(@feature)) if query.length < user_search_min_length
+
+        enrolled_ids = @feature.users.map(&:to_s)
+        begin
+          users = config.get(:user_search, query, user_search_limit)
+          json(
+            users: users.take(user_search_limit).map do |user|
+              hashed = user_to_hash(user)
+              hashed.merge(enrolled: enrolled_ids.include?(hashed[:id]))
+            end,
+            feature_version: feature_version(@feature),
+          )
+        rescue StandardError
+          response.status = 503
+          json(error: 'Nickname search is temporarily unavailable. Please try again.')
+        end
+      end
+
+      def enrolled_users
+        response['cache-control'] = 'no-store'
+        @rollout ||= config.get(:instance)
+        begin
+          @feature = @rollout.get(params[:feature_name])
+        rescue StandardError
+          return not_found
+        end
+        load_selected_users
+
+        json(
+          users: @selected_users,
+          total: @users_total_count,
+          page: @user_page,
+          per_page: @users_per_page,
+          total_pages: @users_total_pages,
+          feature_version: feature_version(@feature),
+          lookup_failed: @selected_user_lookup_failed || false,
+        )
+      end
+
       def load_selected_users
-        ids = @feature.users.map(&:to_s)
-        lookup_user_nicknames(ids)
-        @selected_users = ids.map { |id| { id: id, nickname: user_label(id) } }
-        @selected_user_lookup_failed = @user_lookup_failed
+        @users_per_page = USER_PAGE_SIZE
+        all_ids = @feature.users.map { |id| id.to_s }.uniq.sort
+        @users_total_count = all_ids.size
+        @users_total_pages = [ (all_ids.size.to_f / @users_per_page).ceil, 1 ].max
+        @user_page = parse_users_page(params[:page], @users_total_pages)
+        offset = (@user_page - 1) * @users_per_page
+        page_ids = all_ids[offset, @users_per_page] || []
+        if config.defined?(:user_lookup)
+          lookup_user_nicknames(page_ids)
+        end
+        @selected_users = page_ids.map { |id| { id: id, nickname: user_label(id, include_id: false) } }
+        @selected_user_lookup_failed = @user_lookup_failed == true
+      end
+
+      def parse_users_page(value, total_pages)
+        candidate = 1
+        unless value.is_a?(Array) || value.is_a?(Hash)
+          raw = value.to_s.strip
+          candidate = raw.to_i if raw.match?(/\A\d+\z/)
+        end
+        candidate = 1 if candidate < 1
+        candidate = total_pages if candidate > total_pages
+        candidate = 1 if candidate < 1
+        candidate
       end
 
       def load_history_user_nicknames(events)
@@ -174,6 +261,8 @@ module Rollout::UI
       end
 
       def lookup_user_nicknames(ids)
+        return unless config.defined?(:user_lookup)
+
         @user_nicknames ||= {}
         @user_lookup_attempted ||= {}
         missing_ids = ids.uniq.reject { |id| @user_lookup_attempted.key?(id) }
@@ -199,37 +288,97 @@ module Rollout::UI
       end
 
       def update
+        enrollment = parse_enrollment!
         rollout = config.get(:instance)
         actor = config.get(:actor, scope: self)
 
         with_rollout_context(rollout, actor: actor) do
           rollout.with_feature(params[:feature_name]) do |feature|
-            validate_feature_version!(feature)
+            validate_feature_version!(feature, enrollment)
             feature.percentage = params[:percentage].to_f.clamp(0.0, 100.0)
             feature.groups = (params[:groups] || []).reject(&:empty?).map(&:to_sym)
-            if params[:users]
-              feature.users = params[:users].split(',').map(&:strip).reject(&:empty?).uniq.sort
-            end
+            apply_enrollment!(feature, enrollment)
             feature.data["description"] = params[:description]
             feature.data["updated_at"] = Time.now.to_i
           end
         end
 
-        redirect_to feature_path(params[:feature_name])
+        redirect_location = feature_path(params[:feature_name])
+        if params.key?(:page)
+          after_feature = config.get(:instance).get(params[:feature_name])
+          total_pages = [ (after_feature.users.map(&:to_s).uniq.size.to_f / USER_PAGE_SIZE).ceil, 1 ].max
+          page = parse_users_page(params[:page], total_pages)
+          redirect_location = "#{feature_path(params[:feature_name])}?#{Rack::Utils.build_query('page' => page)}"
+        end
+        redirect_to redirect_location
       rescue StaleFeature => error
         query = Rack::Utils.build_query(error: error.message)
         redirect_to("#{feature_path(params[:feature_name])}?#{query}")
+      rescue InvalidEnrollment
+        bad_request(StandardError.new('invalid enrollment update'))
       end
 
-      def validate_feature_version!(feature)
+      # Delta mode is only the scalar marker "1" plus a real fingerprint.
+      # Any other present marker is rejected so it cannot fall through to a
+      # legacy full-list replacement. Legacy replacement runs only when the
+      # marker is absent, and only for a scalar string.
+      def parse_enrollment!
+        if params.key?(:user_changes)
+          raise InvalidEnrollment unless params[:user_changes] == '1'
+          raise InvalidEnrollment unless params[:feature_version].is_a?(String) && !params[:feature_version].empty?
+          additions = parse_delta_ids(params[:users_to_add])
+          removals = parse_delta_ids(params[:users_to_remove])
+          raise InvalidEnrollment if additions.nil? || removals.nil?
+          return [:delta, additions, removals]
+        end
+
+        return nil unless params.key?(:users)
+
+        users = params[:users]
+        return nil if users.nil?
+        raise InvalidEnrollment unless users.is_a?(String)
+        [:legacy, users]
+      end
+
+      def apply_enrollment!(feature, enrollment)
+        return if enrollment.nil?
+
+        kind, *payload = enrollment
+        if kind == :delta
+          additions, removals = payload
+          current = feature.users.map { |id| id.to_s }.uniq
+          feature.users = (current + additions - removals).uniq.sort
+        else
+          feature.users = payload.fetch(0).split(',').map(&:strip).reject(&:empty?).uniq.sort
+        end
+      end
+
+      def parse_delta_ids(value)
+        return [] if value.nil?
+        return nil unless value.is_a?(String) || value.is_a?(Array)
+        list = value.is_a?(Array) ? value : value.to_s.split(',')
+        return nil unless list.all? { |entry| entry.is_a?(String) }
+        list.map(&:strip).reject(&:empty?)
+      rescue StandardError
+        nil
+      end
+
+      def validate_feature_version!(feature, enrollment = nil)
+        if enrollment&.first == :delta
+          version = params[:feature_version]
+          raise InvalidEnrollment unless version.is_a?(String) && !version.empty?
+          if version != feature_version(feature)
+            raise StaleFeature, STALE_FEATURE_MESSAGE
+          end
+          return
+        end
+
         stale = if params.key?(:feature_version)
           params[:feature_version].to_s != feature_version(feature)
         else
           feature.data['updated_at'] && params[:last_updated_at].to_s != feature.data['updated_at'].to_s
         end
-        if stale
-          raise StaleFeature, 'This rollout changed since you opened it. Your update was not saved. Review the latest state and try again.'
-        end
+        raise StaleFeature, STALE_FEATURE_MESSAGE if stale
       end
 
       def activate_percentage

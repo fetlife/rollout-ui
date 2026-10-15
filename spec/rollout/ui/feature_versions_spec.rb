@@ -58,16 +58,16 @@ RSpec.describe "Feature form versions" do
 
   it "allows consecutive additions through freshly rendered forms without JavaScript" do
     first_version = form_version
-    post path, users: "123", percentage: "25", feature_version: first_version
+    post path, user_changes: "1", users_to_add: "123", percentage: "25", feature_version: first_version
     expect(last_response.location).to eq(path)
 
     follow_redirect!
     expect(last_response).to be_ok
     second_version = response_version
     expect(second_version).not_to eq(first_version)
-    expect(last_response.body).to include('rows="2">123</textarea>')
+    expect(last_response.body).to include('name="users_to_remove[]" value="123"', 'name="users_to_add"')
 
-    post path, users: "123, 456", percentage: "25", feature_version: second_version
+    post path, user_changes: "1", users_to_add: "456", percentage: "25", feature_version: second_version
     expect(last_response.location).to eq(path)
     expect(ROLLOUT.get(feature_name).users).to eq(%w[123 456])
     expect(ROLLOUT.logging.events(feature_name).count).to eq(2)

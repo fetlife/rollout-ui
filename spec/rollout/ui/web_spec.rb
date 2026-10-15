@@ -200,22 +200,25 @@ RSpec.describe 'Web UI' do
       expect(last_response.body).to include("value=\"#{CGI.escapeHTML(group)}\" selected>")
       expect(last_response.body).to include('value="other">', 'value="">(none)')
       expect(last_response.body).to include('name="last_updated_at" value="123"', 'form="updateFormSubmit"')
-      expect(last_response.body).to include("rows=\"2\">#{CGI.escapeHTML(users.join(', '))}</textarea>")
+      expect(last_response.body).to include('name="users_to_remove[]"', "value=\"#{CGI.escapeHTML(users.first)}\"")
       expect(last_response.body).to include('&lt;script&gt;bad()&lt;/script&gt;')
       expect(last_response.body).not_to include(description, users.first, '<script>bad()</script>')
       message = last_response.body[/onclick="return confirm\((.*?)\)"/, 1]
       expect(JSON.parse(CGI.unescapeHTML(message))).to eq("Are you sure you want to delete #{name}?")
     end
 
-    it 'selects none for empty groups and hides the users field above 150 users' do
+    it 'selects none for empty groups and keeps large cohorts editable as pages' do
       allow(feature).to receive(:groups).and_return([])
       allow(feature).to receive(:users).and_return((1..151).to_a)
 
       get '/features/test'
 
       expect(last_response).to be_ok
-      expect(last_response.body).to include('value="" selected>(none)', '>151</div>')
-      expect(last_response.body).not_to include('<textarea', 'value="other" selected')
+      expect(last_response.body).to include('value="" selected>(none)', 'id="enrolled-user-count">151</span>',
+        'name="users_to_add"', 'name="users_to_remove[]"')
+      expect(last_response.body).not_to include('Showing 1–25 of 151 enrolled users')
+      expect(last_response.body.scan('data-user-id=').count).to eq(25)
+      expect(last_response.body).not_to include('name="users"', 'value="other" selected')
     end
 
     it 'renders the new form and retains mounted links and stylesheet paths' do

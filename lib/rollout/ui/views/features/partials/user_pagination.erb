@@ -1,0 +1,7 @@
+<nav id="enrolled-users-pagination" class="enrolled-user-pagination flex items-center justify-between text-xs" aria-label="Enrolled user pages">
+  <span id="users-page-number" class="text-gray-600" data-user-page-number aria-live="polite">Page <%= h(@user_page) %> of <%= h(@users_total_pages) %></span>
+  <div class="flex items-center">
+    <a id="users-previous" class="border rounded-sm py-2 px-3 text-gray-600 mr-2" role="link"<% if @user_page > 1 %> href="<%= h("#{feature_path(@feature.name)}?#{Rack::Utils.build_query(page: @user_page - 1)}") %>"<% end %> data-user-page-direction="previous" data-page="<%= [@user_page - 1, 1].max %>" aria-disabled="<%= @user_page == 1 %>"<% if @user_page == 1 %> tabindex="-1"<% end %>>&larr; Previous</a>
+    <a id="users-next" class="border rounded-sm py-2 px-3 text-gray-600" role="link"<% if @user_page < @users_total_pages %> href="<%= h("#{feature_path(@feature.name)}?#{Rack::Utils.build_query(page: @user_page + 1)}") %>"<% end %> data-user-page-direction="next" data-page="<%= [@user_page + 1, @users_total_pages].min %>" aria-disabled="<%= @user_page == @users_total_pages %>"<% if @user_page == @users_total_pages %> tabindex="-1"<% end %>>Next &rarr;</a>
+  </div>
+</nav>

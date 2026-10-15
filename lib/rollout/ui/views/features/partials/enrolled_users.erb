@@ -1,0 +1,66 @@
+<link rel="stylesheet" href="<%= h(stylesheet_path('enrolled-users')) %>">
+<section id="enrolled-users" class="mb-5" aria-labelledby="enrolled-users-heading" data-users-url="<%= h(enrolled_users_path(@feature.name)) %>" data-total="<%= h(@users_total_count) %>" data-page="<%= h(@user_page) %>" data-per-page="<%= h(@users_per_page) %>" data-total-pages="<%= h(@users_total_pages) %>">
+  <input type="hidden" name="user_changes" value="1">
+  <input type="hidden" name="page" id="users-page" value="<%= h(@user_page) %>">
+  <h3 id="enrolled-users-heading" class="text-gray-500 mb-2">Users (<span id="enrolled-user-count"><%= h(@users_total_count) %></span>)</h3>
+  <div id="user-id-addition" class="mb-4">
+    <label class="block text-gray-500 mb-2" for="users-to-add">Add user IDs</label>
+    <input id="users-to-add" name="users_to_add" class="appearance-none border rounded-sm w-full py-2 px-4 text-gray-600 bg-white" placeholder="Comma-separated user IDs" autocomplete="off">
+  </div>
+  <% if user_selector_enabled? %>
+    <div id="user-selector" class="mb-2" data-search-url="<%= h(feature_user_search_path(@feature.name)) %>" data-min-length="<%= h(user_search_min_length) %>" data-limit="<%= h(user_search_limit) %>" hidden>
+      <label class="block text-gray-500 mb-2" for="user-nickname" title="Search by nickname. At least <%= h(user_search_min_length) %> characters.">Add user</label>
+      <div class="enrolled-user-search-field">
+        <input id="user-nickname" class="appearance-none border rounded-sm w-full py-2 px-4 text-gray-600 bg-white" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="user-search-results" aria-describedby="user-search-status user-search-result-status" autocomplete="off" spellcheck="false" maxlength="<%= USER_SEARCH_MAX_LENGTH %>" placeholder="Search by nickname…" title="Search by nickname. At least <%= h(user_search_min_length) %> characters.">
+        <div id="user-search-dropdown" class="border rounded-sm bg-white" hidden>
+          <div id="user-search-results" role="listbox" aria-label="Matching nicknames" hidden></div>
+          <p id="user-search-result-status" class="text-xs text-gray-600" role="status" aria-live="polite"></p>
+        </div>
+      </div>
+      <p id="user-search-status" class="text-xs text-gray-600" role="status" aria-live="polite"></p>
+    </div>
+  <% end %>
+  <div id="user-change-inputs" hidden></div>
+  <%= erb :"features/partials/user_pagination", layout: false %>
+  <table id="enrolled-users-table" class="w-full text-left" aria-label="Explicitly enrolled users" tabindex="-1">
+    <thead class="text-xs text-gray-500 bg-gray-200">
+      <tr><th scope="col" class="px-3 py-2 font-normal">Nickname</th><th scope="col" class="px-3 py-2 font-normal">User ID</th><th scope="col" class="px-3 py-2 font-normal text-right">Action</th></tr>
+    </thead>
+    <tbody id="enrolled-users-rows">
+      <% if @selected_users.empty? %>
+        <tr><td colspan="3" class="px-3 py-3 text-gray-500">No explicitly enrolled users.</td></tr>
+      <% end %>
+      <% @selected_users.each do |user| %>
+        <tr class="border-b border-gray-200" data-user-id="<%= h(user[:id]) %>" data-nickname="<%= h(user[:nickname]) %>">
+          <td class="px-3 py-2 break-all"><%= h(user[:nickname]) %></td>
+          <td class="px-3 py-2 text-xs text-gray-500">#<%= h(user[:id]) %></td>
+          <td class="px-3 py-2 text-right">
+            <label class="text-xs text-gray-600"><input type="checkbox" name="users_to_remove[]" value="<%= h(user[:id]) %>" aria-label="Remove <%= h(user[:nickname]) %> (#<%= h(user[:id]) %>)"> Remove</label>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <p id="enrollment-status" class="text-gray-500 mt-2" role="status" aria-live="polite"></p>
+  <% if @selected_user_lookup_failed %>
+    <p class="text-gray-500 mt-2" role="status">Selected nicknames could not be loaded. Their user IDs are preserved.</p>
+  <% end %>
+  <noscript><p class="text-xs text-gray-500 mt-2">Update changes before switching pages. Add users by ID and check Remove for users on the current page.</p></noscript>
+  <div id="pending-user-slot" hidden>
+    <div id="pending-user-changes" class="border border-gray-300 rounded-sm bg-white p-3 text-xs text-gray-600" hidden>
+      <p id="pending-user-summary" class="text-sm font-semibold" role="status" aria-live="polite" aria-atomic="true"></p>
+      <div id="pending-user-actions" role="group" aria-label="Pending user actions">
+        <button id="review-user-changes" type="button" class="border rounded-sm bg-gray-100 px-3 py-2 font-semibold hover:bg-gray-200" aria-expanded="false" aria-controls="pending-user-review">Review</button>
+        <button id="discard-user-changes" type="button" class="px-2 py-2 hover:underline" aria-label="Discard user changes">Discard</button>
+      </div>
+      <div id="pending-user-review" class="border rounded-sm bg-white p-3" role="region" aria-labelledby="pending-user-review-heading" hidden>
+        <div class="flex items-center justify-between mb-2">
+          <h4 id="pending-user-review-heading">Pending user changes</h4>
+          <button id="close-user-review" type="button" class="hover:underline" aria-label="Close pending user changes">Close</button>
+        </div>
+        <ul id="pending-user-details"></ul>
+      </div>
+    </div>
+  </div>
+</section>
+<script src="<%= h(javascript_path('enrolled-users')) %>" defer></script>

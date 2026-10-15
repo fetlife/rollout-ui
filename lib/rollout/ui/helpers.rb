@@ -7,7 +7,7 @@ require "rollout/ui/version"
 
 module Rollout::UI
   module Helpers
-    USER_EDIT_LIMIT = 150
+    USER_PAGE_SIZE = 25
     USER_SEARCH_MAX_LENGTH = 100
 
     def stylesheet_path(name)
@@ -22,6 +22,14 @@ module Rollout::UI
       "#{request.script_name}/users/search"
     end
 
+    def enrolled_users_path(feature_name)
+      "#{request.script_name}/features/#{feature_name}/users"
+    end
+
+    def feature_user_search_path(feature_name)
+      "#{request.script_name}/features/#{feature_name}/users/search"
+    end
+
     def user_selector_enabled?
       config.defined?(:user_search) && config.defined?(:user_lookup)
     end
@@ -34,11 +42,12 @@ module Rollout::UI
       config.get(:user_search_limit).to_i.clamp(1, 100)
     end
 
-    def user_label(id)
+    def user_label(id, include_id: true)
       id = id.to_s
       return @user_nicknames[id] if @user_nicknames&.key?(id)
 
-      @user_lookup_attempted&.key?(id) ? "Unknown user (##{id})" : "User (##{id})"
+      label = @user_lookup_attempted&.key?(id) ? "Unknown user" : "User"
+      include_id ? "#{label} (##{id})" : label
     end
 
     def feature_version(feature)

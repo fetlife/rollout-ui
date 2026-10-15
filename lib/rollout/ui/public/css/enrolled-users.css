@@ -1,0 +1,191 @@
+#enrolled-users .enrolled-user-search-field,
+#enrolled-users #pending-user-slot {
+  position: relative;
+}
+
+#enrolled-users .text-gray-500,
+#enrolled-users .text-gray-600,
+#enrolled-users .text-gray-400 {
+  color: #4a5568;
+}
+
+.dark #enrolled-users .text-gray-500,
+.dark #enrolled-users .text-gray-600,
+.dark #enrolled-users .text-gray-400 {
+  color: #b8b8b8;
+}
+
+#enrolled-users input::placeholder {
+  color: #4a5568;
+  opacity: 1;
+}
+
+.dark #enrolled-users input::placeholder {
+  color: #b8b8b8;
+}
+
+#enrolled-users #user-search-dropdown {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+}
+
+#enrolled-users #user-search-results {
+  max-height: min(16rem, 40vh);
+  overflow-y: auto;
+}
+
+#enrolled-users #user-search-result-status {
+  padding: 0.5rem 0.75rem;
+  line-height: 1rem;
+  max-height: min(8rem, 30vh);
+  overflow-y: auto;
+}
+
+#enrolled-users #user-search-results [role="option"] > span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+#enrolled-users #user-search-results [role="option"][aria-disabled="false"]:not([aria-selected="true"]):hover {
+  background-color: #edf2f7;
+}
+
+.dark #enrolled-users #user-search-results [role="option"][aria-disabled="false"]:not([aria-selected="true"]):hover {
+  background-color: #3a3a3a;
+}
+
+#enrolled-users #user-search-results [role="option"][aria-selected="true"] {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+#enrolled-users #user-search-results [role="option"][aria-selected="true"] .text-gray-500 {
+  color: inherit;
+}
+
+#enrolled-users #user-search-results [role="option"][aria-disabled="true"] {
+  cursor: default;
+}
+
+#enrolled-users #user-search-status {
+  height: 1.5rem;
+  line-height: 1.5rem;
+  margin-top: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#enrolled-users #pending-user-slot {
+  margin-top: 0.75rem;
+}
+
+#enrolled-users #pending-user-changes:not([hidden]) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 0.5rem;
+  row-gap: 0.5rem;
+}
+
+#enrolled-users #pending-user-summary {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+#enrolled-users #pending-user-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#enrolled-users #pending-user-actions > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+}
+
+#enrolled-users #review-user-changes {
+  border-color: currentColor;
+}
+
+#enrolled-users #pending-user-review {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  right: 0;
+  width: min(100%, 28rem);
+  z-index: 20;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+}
+
+#enrolled-users #pending-user-details {
+  max-height: min(16rem, 50vh);
+  overflow-y: auto;
+}
+
+#enrolled-users #pending-user-details li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+#enrolled-users #pending-user-details li span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+#enrolled-users button {
+  min-height: 24px;
+}
+
+#enrolled-users .enrolled-user-pagination {
+  margin-bottom: 0.5rem;
+}
+
+#enrolled-users .enrolled-user-pagination [aria-disabled="true"] {
+  opacity: 0.5;
+}
+
+@media (max-width: 480px) {
+  #enrolled-users #pending-user-changes:not([hidden]) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #enrolled-users #pending-user-actions {
+    justify-self: center;
+  }
+
+  #enrolled-users #enrolled-users-table {
+    table-layout: fixed;
+  }
+
+  #enrolled-users #enrolled-users-table th,
+  #enrolled-users #enrolled-users-table td {
+    padding-left: 0.375rem;
+    padding-right: 0.375rem;
+  }
+
+  #enrolled-users #enrolled-users-table th:nth-child(2) {
+    width: 35%;
+  }
+
+  #enrolled-users #enrolled-users-table th:last-child {
+    width: 4rem;
+  }
+
+  #enrolled-users #enrolled-users-table td:nth-child(2) {
+    overflow-wrap: anywhere;
+  }
+
+  #enrolled-users .enrolled-user-pagination a {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}
