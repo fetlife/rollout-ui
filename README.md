@@ -109,8 +109,8 @@ CREATE INDEX CONCURRENTLY users_nickname_prefix_idx
 
 Check the query plan against your schema and collation. The selector supports
 keyboard navigation and preserves pending changes if a lookup fails. The
-enrolled count includes unresolved accounts, shown as `Unknown user (#ID)`, but
-excludes users enabled through groups or percentage.
+enrolled count includes unresolved accounts, shown as `Unknown user` with their
+ID in a separate column, but excludes users enabled through groups or percentage.
 
 ### Paginated enrollment editing
 
@@ -121,10 +121,10 @@ There is no longer a 150-user enrollment editing cutoff.
 
 Remove/Undo and nickname additions are staged until **Update**. With JavaScript,
 switching enrollment pages leaves pending changes and unsaved description,
-groups, and percentage fields intact. A pending-changes panel lists additions
-and removals across all pages. Search marks already-enrolled users even when
-they are on another page. The heading counts stored enrollments; pending changes
-are reported separately until saved.
+groups, and percentage fields intact. A pending-changes callout below the table
+opens a **Review** popover listing additions and removals across all pages. Search marks
+already-enrolled users even when they are on another page. The heading counts
+stored enrollments; pending changes are reported separately until saved.
 
 The form submits additions and removals, not a replacement list from the visible
 page. Delta requests use `user_changes=1` and require a full-state

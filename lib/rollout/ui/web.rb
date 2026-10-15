@@ -223,7 +223,7 @@ module Rollout::UI
         if config.defined?(:user_lookup)
           lookup_user_nicknames(page_ids)
         end
-        @selected_users = page_ids.map { |id| { id: id, nickname: user_label(id) } }
+        @selected_users = page_ids.map { |id| { id: id, nickname: user_label(id, include_id: false) } }
         @selected_user_lookup_failed = @user_lookup_failed == true
       end
 

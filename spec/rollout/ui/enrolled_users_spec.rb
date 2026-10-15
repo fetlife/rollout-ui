@@ -128,7 +128,7 @@ RSpec.describe 'Enrolled users pagination' do
     expect(body['page']).to eq(2)
   end
 
-  it 'retains unknown IDs and reports lookup failures as ID-based labels' do
+  it 'retains unknown IDs separately from compact labels when lookup fails' do
     ROLLOUT.with_feature(feature_name) { |feature| feature.users = %w[123 456] }
     allow(lookup).to receive(:call).and_raise('lookup unavailable')
 
@@ -137,7 +137,7 @@ RSpec.describe 'Enrolled users pagination' do
 
     expect(body['lookup_failed']).to be true
     expect(body['users'].map { |user| user['id'] }).to eq(%w[123 456])
-    expect(body['users'].map { |user| user['nickname'] }).to eq(['Unknown user (#123)', 'Unknown user (#456)'])
+    expect(body['users'].map { |user| user['nickname'] }).to eq(['Unknown user', 'Unknown user'])
   end
 
   it 'serves enrolled users and search under a Rack mount' do

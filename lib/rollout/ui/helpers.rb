@@ -42,11 +42,12 @@ module Rollout::UI
       config.get(:user_search_limit).to_i.clamp(1, 100)
     end
 
-    def user_label(id)
+    def user_label(id, include_id: true)
       id = id.to_s
       return @user_nicknames[id] if @user_nicknames&.key?(id)
 
-      @user_lookup_attempted&.key?(id) ? "Unknown user (##{id})" : "User (##{id})"
+      label = @user_lookup_attempted&.key?(id) ? "Unknown user" : "User"
+      include_id ? "#{label} (##{id})" : label
     end
 
     def feature_version(feature)
