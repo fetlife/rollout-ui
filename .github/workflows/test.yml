@@ -8,8 +8,7 @@ on:
 
 jobs:
   test:
-    # setup-ruby has no build of the .ruby-version Ruby (3.4.7) for ubuntu-26.04.
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     services:
       redis:
         image: redis:7-alpine
