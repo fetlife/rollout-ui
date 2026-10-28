@@ -2,6 +2,7 @@ require "erb"
 require "json"
 require "rack"
 require "rollout"
+require "set"
 
 require "rollout/ui/version"
 require "rollout/ui/config"
@@ -98,6 +99,7 @@ module Rollout::UI
             end
           )
         else
+          load_defined_features
           @history_events = @rollout.respond_to?(:logging) ? @rollout.logging.global_events.reverse : []
           load_history_user_nicknames(@history_events)
           render_view(:'features/index')
@@ -120,11 +122,23 @@ module Rollout::UI
         if json_request?
           json(feature_to_hash(@feature))
         else
+          load_defined_features
           load_selected_users
           @history_events = @rollout.respond_to?(:logging) ? @rollout.logging.events(@feature.name).reverse : []
           load_history_user_nicknames(@history_events)
           render_view(:'features/show')
         end
+      end
+
+      def load_defined_features
+        names = if config.defined?(:defined_features)
+          config.get(:defined_features)
+        elsif Rollout.respond_to?(:definitions)
+          path = Rollout.definitions_path
+          Rollout.definitions.keys if path && File.directory?(path)
+        end
+
+        @defined_features = names.map(&:to_s).to_set unless names.nil?
       end
 
       def search_users

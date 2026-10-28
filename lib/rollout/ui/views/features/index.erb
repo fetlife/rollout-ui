@@ -11,6 +11,9 @@
   <table class="text-sm w-100 text-left w-full">
     <thead class="font-semibold text-gray-500 border-b border-gray-200">
       <th class="pb-2 pr-3">Name</th>
+      <% if @defined_features %>
+        <th class="w-10 px-3" aria-label="Definition"></th>
+      <% end %>
       <th class="pb-2 pr-3">Percentage</th>
       <th class="pb-2 pr-3">Groups</th>
       <th class="pb-2 pr-3">Users</th>
@@ -25,9 +28,21 @@
         <% feature = @rollout.get(feature_name) %>
         <tr class="border-b border-gray-200">
           <td class="py-2">
-            <a class="text-blue-600 hover:text-blue-700 hover:underline" href="<%= h(feature_path(feature.name)) %>"><%= h(feature_name) %></a>
+            <a class="text-blue-600 hover:text-blue-700 hover:underline whitespace-no-wrap" href="<%= h(feature_path(feature.name)) %>"><%= h(feature_name) %></a>
             <div class="text-gray-500 text-xs"><%= h(feature.data['description']) %></div>
           </td>
+          <% if @defined_features %>
+            <td class="py-2 px-3">
+              <% if missing_definition?(feature_name) %>
+                <div class="flex justify-center">
+                  <span class="definition-warning relative inline-flex text-yellow-800" tabindex="0" role="img" aria-label="Missing definition">
+                    <%= erb :"features/partials/warning_icon", layout: false %>
+                    <span class="definition-tooltip hidden absolute right-0 px-3 border border-yellow-700 bg-yellow-100 text-xs text-center leading-normal whitespace-no-wrap rounded-sm" aria-hidden="true">Missing definition</span>
+                  </span>
+                </div>
+              <% end %>
+            </td>
+          <% end %>
           <td class="py-2 whitespace-no-wrap">
             <% if feature.percentage == 0 %>
               <span class="text-gray-400"><%= h(feature.percentage) %>%</span>
