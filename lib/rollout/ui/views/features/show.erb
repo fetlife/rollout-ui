@@ -4,6 +4,15 @@
   <pre class="text-red-500"><%= h(params[:error]) %></pre>
 <% end %>
 <h2 class="font-semibold text-xl text-gray-500 pt-12"><%= h(@feature.name) %></h2>
+<% if missing_definition?(@feature.name) %>
+  <section class="mt-4 p-4 max-w-3xl flex items-center border border-yellow-700 bg-yellow-100 text-yellow-800 text-sm rounded-sm" aria-labelledby="missing-definition-heading">
+    <div class="mr-4 flex-shrink-0"><%= erb :"features/partials/warning_icon", layout: false %></div>
+    <div>
+      <h3 id="missing-definition-heading" class="font-semibold">Missing definition</h3>
+      <p class="mt-1 leading-relaxed">This feature has no definition in the current application.</p>
+    </div>
+  </section>
+<% end %>
 
 <div class="w-8 h-1 bg-gray-300 my-10"></div>
 <main class="p-6 bg-gray-100 max-w-3xl w-full text-sm rounded-sm">

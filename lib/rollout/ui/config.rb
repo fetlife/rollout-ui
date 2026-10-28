@@ -6,6 +6,7 @@ module Rollout::UI
   class Config
     KEYS = %i[
       instance
+      defined_features
       actor
       actor_url
       timestamp_format

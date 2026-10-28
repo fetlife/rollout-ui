@@ -139,6 +139,31 @@ and check Remove for visible rows. **Update before following page links** to
 avoid discarding unsaved form changes. Enrollment pagination remains available
 when nickname lookup fails; unknown IDs are never silently dropped.
 
+## Missing definitions
+
+The overview and feature page mark stored features that have no definition in
+the current application as **Missing definition**. This is informational: it
+does not change targeting, editing, or deletion, and a missing definition is not
+proof that a feature is unused.
+
+With Rollout's `definitions` API, the UI checks `Rollout.definitions` when the
+definitions directory exists. Older Rollout versions, a missing directory, or
+`Rollout.definitions_path = nil` leave checking disabled.
+
+Applications that also register features in Ruby can supply their complete list
+of defined names instead:
+
+```ruby
+Rollout::UI.configure do
+  defined_features { MyApplication.defined_feature_names }
+end
+```
+
+The callback returns string or symbol names. Returning `nil` disables checking;
+an empty list marks every stored feature as missing. Definitions are read once
+per HTML request, so changes appear on the next request. Loading errors are not
+treated as missing definitions. JSON responses are unchanged.
+
 ## Concurrent edits
 
 Feature forms include a `feature_version` fingerprint of the editable state:
