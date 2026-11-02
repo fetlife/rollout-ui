@@ -149,6 +149,24 @@ RSpec.describe 'Web UI' do
     expect(last_response.body).to include('Rollout UI') & include('test')
   end
 
+  it "uses the feature name in the show page title" do
+    get '/features/test'
+
+    expect(last_response.body).to include('<title>test | Rollout UI</title>')
+  end
+
+  it "escapes the feature name in the show page title" do
+    get "/features/'+alert(1)+'"
+
+    expect(last_response.body).to include('<title>&#39;+alert(1)+&#39; | Rollout UI</title>')
+  end
+
+  it "uses the default title on the index page" do
+    get '/'
+
+    expect(last_response.body).to include('<title>Rollout UI</title>')
+  end
+
   it "escapes javascript in the action show" do
     get "/features/'+alert(1)+'"
 

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html data-timestamp-format="<%= h(config.get(:timestamp_format)) %>">
   <head>
-    <title>Rollout UI</title>
+    <title><%= h(page_title) %></title>
     <meta name="viewport" content="width=device-width initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <link rel="stylesheet" href="<%= h(stylesheet_path('tailwind.min')) %>">

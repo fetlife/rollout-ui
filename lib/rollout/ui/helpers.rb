@@ -38,6 +38,10 @@ module Rollout::UI
       @defined_features && !@defined_features.include?(feature_name.to_s)
     end
 
+    def page_title
+      @feature ? "#{@feature.name} | Rollout UI" : 'Rollout UI'
+    end
+
     def user_search_min_length
       config.get(:user_search_min_length).to_i.clamp(1, USER_SEARCH_MAX_LENGTH)
     end
